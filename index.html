@@ -726,11 +726,18 @@
             state.currentClass = className;
             state.cardsInDeckCount = 0;
             state.deck = {};
-            addLog(`>> ${className} クラスを選択しました。`);
+            
+            // 確定カードをデッキに追加
             addCardToDeck(guaranteedCards[0]);
             addCardToDeck(guaranteedCards[1]);
+            
             elements.classSelection.style.display = 'none';
             elements.pickPhase.style.display = 'block';
+            
+            // cardsInDeckCountを確定カード分は加算せず、最初のピックへ
+            state.pickCount = 0;
+            elements.pickCountDisplay.textContent = `1/14`; // 最初のピックは1回目
+            
             pickNext();
         }
 
