@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2Pick Simulator</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 960px;
+            gap: 2rem;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1, h2, h3 {
+            color: #111827;
+            text-align: center;
+        }
+
+        #status-message {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        #class-selection, #pick-phase {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .class-buttons, .card-choices-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+        .class-select-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            background-color: #e5e7eb;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+            width: 45%;
+        }
+
+        .class-select-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            width: 45%;
+            padding: 1rem;
+            background-color: #e5e7eb;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-sizing: border-box;
+        }
+        
+        .card-group:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-pair {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .card-name {
+            font-weight: 600;
+            font-size: 1rem;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .card-pair p {
+            margin: 0.25rem 0;
+            font-size: 0.875rem;
+        }
+
+        .button {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+
+        .button:hover {
+            background-color: #2563eb;
+        }
+        
+        #reroll-button {
+            background-color: #ef4444;
+        }
+        
+        #reroll-button:hover {
+            background-color: #dc2626;
+        }
+        
+        .deck-list-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 1.5rem;
+            background-color: #fff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .deck-list {
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+
+        .deck-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.95rem;
+        }
+        
+        .deck-list li:last-child {
+            border-bottom: none;
+        }
+
+        #log {
+            margin-top: 2rem;
+            padding: 1rem;
+            background-color: #e5e7eb;
+            border-radius: 0.75rem;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        #log p {
+            margin: 0.5rem 0;
+            border-bottom: 1px dashed #9ca3af;
+            padding-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        #log p:last-child {
+            border-bottom: none;
+        }
+
+        .completed-message {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+            margin-top: 2rem;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="main-content">
+            <h1>2Pick シミュレーター</h1>
+            <div id="status-message"></div>
+            
+            <div id="class-selection">
+                <h2>クラス選択</h2>
+                <div class="class-buttons" id="class-buttons"></div>
+            </div>
+
+            <div id="pick-phase" style="display: none;">
+                <h2>ピック段階 <span id="pick-count"></span></h2>
+                <div class="card-choices-container" id="card-choices-container"></div>
+                <button id="reroll-button" class="button">再抽選 (残り <span id="reroll-count">2</span>回)</button>
+            </div>
+            
+            <div class="deck-list-container">
+                <h3>デッキリスト</h3>
+                <ul id="current-deck" class="deck-list"></ul>
+            </div>
+            
+            <div id="log">
+                <h3>ログ</h3>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const neutralCards = [
+            { name: "ゴブリン", rarity: "ブロンズ", group: "normal" },
+            { name: "ワイルドホッグ", rarity: "ブロンズ", group: "normal" },
+            { name: "ユニコーンの踊り手・ユニコ", rarity: "ブロンズ", group: "normal" },
+            { name: "天使の泉", rarity: "ブロンズ", group: "normal" },
+            { name: "天剣の天使", rarity: "シルバー", group: "normal" },
+            { name: "天弓の天使・リリエル", rarity: "シルバー", group: "normal" },
+            { name: "ゴブリンキング", rarity: "シルバー", group: "normal" },
+            { name: "天界の守護者", rarity: "シルバー", group: "normal" },
+            { name: "ウリエル", rarity: "ゴールド", group: "normal" },
+            { name: "ツヴァイ", rarity: "ゴールド", group: "normal" },
+            { name: "オーディン", rarity: "ゴールド", group: "normal" },
+            { name: "ゼルエル", rarity: "ゴールド", group: "normal" },
+            { name: "ルシフェル", rarity: "レジェンド", group: "normal" },
+            { name: "バハムート", rarity: "レジェンド", group: "normal" },
+            { name: "サタン", rarity: "レジェンド", group: "normal" },
+            { name: "イスラフィール", rarity: "レジェンド", group: "normal" },
+        ];
+
+        const cardData = {
+            "エルフ": {
+                cards: [
+                    ...neutralCards,
+                    { name: "アドベンチャーエルフ・メイ", rarity: "ブロンズ", group: "normal" },
+                    { name: "純粋なるウォーターフェアリー", rarity: "ブロンズ", group: "normal" },
+                    { name: "ベビーフェルパー", rarity: "ブロンズ", group: "normal" },
+                    { name: "妖精のいたずら", rarity: "ブロンズ", group: "normal" },
+                    { name: "風の妖精", rarity: "ブロンズ", group: "normal" },
+                    { name: "エルフの双撃", rarity: "ゴールド", group: "normal" },
+                    { name: "森の意志", rarity: "シルバー", group: "normal" },
+                    { name: "リザ", rarity: "シルバー", group: "normal" },
+                    { name: "エルフナイト・シンシア", rarity: "ゴールド", group: "normal" },
+                    { name: "自然の導き", rarity: "レジェンド", group: "normal" },
+                    { name: "冥府への道", rarity: "レジェンド", group: "normal" },
+                ]
+            },
+            "ロイヤル": {
+                cards: [
+                    ...neutralCards,
+                    { name: "クイックブレーダー", rarity: "ブロンズ", group: "normal" },
+                    { name: "レヴィオンセイバー・アルベール", rarity: "レジェンド", group: "normal" },
+                    { name: "ヴァンガード", rarity: "ブロンズ", group: "normal" },
+                    { name: "アサルト", rarity: "ブロンズ", group: "normal" },
+                    { name: "騎士の誓い", rarity: "ブロンズ", group: "normal" },
+                    { name: "クノイチ", rarity: "シルバー", group: "normal" },
+                    { name: "蒼穹の騎士", rarity: "シルバー", group: "normal" },
+                    { name: "ツバキ", rarity: "ゴールド", group: "normal" },
+                    { name: "セージコマンダー", rarity: "ゴールド", group: "normal" },
+                    { name: "ロイヤルセイバー", rarity: "レジェンド", group: "normal" },
+                ]
+            },
+            "ウィッチ": {
+                cards: [
+                    ...neutralCards,
+                    { name: "マジックミサイル", rarity: "ブロンズ", group: "normal" },
+                    { name: "知恵の光", rarity: "ブロンズ", group: "normal" },
+                    { name: "ウィッチクラフト・エレメント", rarity: "ブロンズ", group: "normal" },
+                    { name: "禁忌の魔法", rarity: "シルバー", group: "normal" },
+                    { name: "神秘の解明", rarity: "シルバー", group: "normal" },
+                    { name: "炎の握撃", rarity: "ゴールド", group: "normal" },
+                    { name: "次元の魔女・ドロシー", rarity: "レジェンド", group: "normal" },
+                    { name: "オズの大魔女", rarity: "レジェンド", group: "normal" },
+                    { name: "禁忌の式神", rarity: "シルバー", group: "normal" },
+                ]
+            },
+            "ドラゴン": {
+                cards: [
+                    ...neutralCards,
+                    { name: "ブレイジングブレス", rarity: "ブロンズ", group: "normal" },
+                    { name: "竜の託宣", rarity: "ブロンズ", group: "normal" },
+                    { name: "竜巫女の儀式", rarity: "ゴールド", group: "normal" },
+                    { name: "アイラ", rarity: "シルバー", group: "normal" },
+                    { name: "ドラゴニュート", rarity: "ブロンズ", group: "normal" },
+                    { name: "ウロボロス", rarity: "レジェンド", group: "normal" },
+                    { name: "竜の闘気", rarity: "シルバー", group: "normal" },
+                    { name: "フォルテ", rarity: "レジェンド", group: "normal" },
+                    { name: "サラマンダーブレス", rarity: "ゴールド", group: "normal" },
+                    { name: "イグニスドラゴン", rarity: "ゴールド", group: "normal" },
+                ]
+            },
+            "ネクロマンサー": {
+                cards: [
+                    ...neutralCards,
+                    { name: "スケルトンナイト", rarity: "ブロンズ", group: "normal" },
+                    { name: "ソウルコンバージョン", rarity: "ブロンズ", group: "normal" },
+                    { name: "ゴースト", rarity: "ブロンズ", group: "normal" },
+                    { name: "破魂の少女", rarity: "シルバー", group: "normal" },
+                    { name: "死の祝福", rarity: "ゴールド", group: "normal" },
+                    { name: "不死者の王", rarity: "ゴールド", group: "normal" },
+                    { name: "ケルベロス", rarity: "レジェンド", group: "normal" },
+                    { name: "冥府の王", rarity: "レジェンド", group: "normal" },
+                    { name: "レッサーマミー", rarity: "ブロンズ", group: "normal" },
+                ]
+            },
+            "ヴァンパイア": {
+                cards: [
+                    ...neutralCards,
+                    { name: "デモンストライク", rarity: "ブロンズ", group: "normal" },
+                    { name: "ブラッドウルフ", rarity: "シルバー", group: "normal" },
+                    { name: "ユリウス", rarity: "ゴールド", group: "normal" },
+                    { name: "メアリー", rarity: "レジェンド", group: "normal" },
+                    { name: "アザゼル", rarity: "レジェンド", group: "normal" },
+                    { name: "デモンコマンダー", rarity: "ブロンズ", group: "normal" },
+                    { name: "レヴィオンヴァンパイア", rarity: "シルバー", group: "normal" },
+                    { name: "黙示録", rarity: "ゴールド", group: "normal" },
+                    { name: "サキュバス", rarity: "シルバー", group: "normal" },
+                    { name: "血の取引", rarity: "ブロンズ", group: "normal" },
+                ]
+            },
+            "ビショップ": {
+                cards: [
+                    ...neutralCards,
+                    { name: "聖なる願い", rarity: "ブロンズ", group: "normal" },
+                    { name: "詠唱：獣姫", rarity: "ブロンズ", group: "normal" },
+                    { name: "神聖なる願い", rarity: "シルバー", group: "normal" },
+                    { name: "テミスの審判", rarity: "ゴールド", group: "normal" },
+                    { name: "ジャンヌダルク", rarity: "レジェンド", group: "normal" },
+                    { name: "セラフ", rarity: "レジェンド", group: "normal" },
+                    { name: "鉄槌の僧侶", rarity: "シルバー", group: "normal" },
+                    { name: "レリア", rarity: "ゴールド", group: "normal" },
+                    { name: "光の道筋", rarity: "ブロンズ", group: "normal" },
+                    { name: "スノーホワイトプリンセス", rarity: "シルバー", group: "normal" },
+                ]
+            },
+        };
+
+        const pickProbability = [
+            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
+            { rarity: "シルバー", groups: { "normal": 1.0 } },
+            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
+            { rarity: "シルバー", groups: { "normal": 1.0 } },
+            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
+            { rarity: "ゴールド", groups: { "normal": 1.0 } },
+            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
+            { rarity: "シルバー", groups: { "normal": 1.0 } },
+            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
+            { rarity: "シルバー", groups: { "normal": 1.0 } },
+            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
+            { rarity: "シルバー", groups: { "normal": 1.0 } },
+            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
+            { rarity: "ゴールド/レジェンド", groups: { "normal": 1.0 } }
+        ];
+
+        const state = {
+            currentClass: null,
+            deck: {},
+            pickCount: 0,
+            rerollCount: 2,
+            cardsInDeckCount: 0
+        };
+
+        const elements = {
+            classSelection: document.getElementById('class-selection'),
+            pickPhase: document.getElementById('pick-phase'),
+            classButtons: document.getElementById('class-buttons'),
+            cardChoicesContainer: document.getElementById('card-choices-container'),
+            rerollButton: document.getElementById('reroll-button'),
+            rerollCount: document.getElementById('reroll-count'),
+            pickCountDisplay: document.getElementById('pick-count'),
+            currentDeck: document.getElementById('current-deck'),
+            log: document.getElementById('log'),
+            statusMessage: document.getElementById('status-message'),
+        };
+
+        function initializeSimulator() {
+            renderClassSelection();
+            elements.rerollButton.textContent = `再抽選 (残り ${state.rerollCount}回)`;
+        }
+
+        function getGuaranteedCards(className) {
+            const classCards = cardData[className].cards;
+            const legendCards = classCards.filter(c => c.rarity === "レジェンド");
+            const goldCards = classCards.filter(c => c.rarity === "ゴールド");
+            const allHighRarityCards = [...legendCards, ...goldCards];
+
+            const card1 = legendCards[Math.floor(Math.random() * legendCards.length)];
+            
+            let card2 = null;
+            let attempts = 0;
+            do {
+                card2 = allHighRarityCards[Math.floor(Math.random() * allHighRarityCards.length)];
+                attempts++;
+            } while (card1 && card2 && card1.name === card2.name && attempts < 10);
+            
+            return [card1, card2];
+        }
+
+        function renderClassSelection() {
+            elements.classButtons.innerHTML = '';
+            for (const className in cardData) {
+                const guaranteedCards = getGuaranteedCards(className);
+                const button = document.createElement('div');
+                button.classList.add('class-select-button');
+                button.innerHTML = `
+                    <h3>${className}</h3>
+                    <p class="card-name">${guaranteedCards[0].name}</p>
+                    <p class="card-name">${guaranteedCards[1].name}</p>
+                `;
+                button.onclick = () => selectClass(className, guaranteedCards);
+                elements.classButtons.appendChild(button);
+            }
+        }
+
+        function selectClass(className, guaranteedCards) {
+            state.currentClass = className;
+            state.cardsInDeckCount = 0;
+            state.deck = {};
+            addLog(`>> ${className} クラスを選択しました。`);
+            addCardToDeck(guaranteedCards[0]);
+            addCardToDeck(guaranteedCards[1]);
+            elements.classSelection.style.display = 'none';
+            elements.pickPhase.style.display = 'block';
+            pickNext();
+        }
+
+        function pickNext() {
+            if (state.cardsInDeckCount >= 30) {
+                endSimulation();
+                return;
+            }
+
+            state.pickCount++;
+            elements.pickCountDisplay.textContent = `${state.pickCount}/14`;
+
+            const choices = getChoicesForPick(state.pickCount - 1);
+            renderChoices(choices);
+        }
+
+        function getChoicesForPick(pickIndex) {
+            const pickInfo = pickProbability[pickIndex];
+            const choices = [];
+
+            for (let i = 0; i < 2; i++) {
+                const group = weightedRandom(pickInfo.groups);
+                const card1 = getRandomCard(pickInfo.rarity, group);
+                const card2 = getRandomCard(pickInfo.rarity, group, card1);
+                
+                if (card1 && card2) {
+                    choices.push([card1, card2]);
+                } else {
+                    choices.push([]);
+                }
+            }
+            return choices;
+        }
+
+        function weightedRandom(weights) {
+            const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
+            let randomNum = Math.random() * totalWeight;
+
+            for (const group in weights) {
+                randomNum -= weights[group];
+                if (randomNum <= 0) {
+                    return group;
+                }
+            }
+            return Object.keys(weights)[0];
+        }
+
+        function getRandomCard(rarity, group, excludeCard = null) {
+            const cardPool = cardData[state.currentClass].cards.filter(c => {
+                const rarityMatch = rarity === "ゴールド/レジェンド" ?
+                    (c.rarity === "ゴールド" || c.rarity === "レジェンド") :
+                    c.rarity === rarity;
+                const groupMatch = c.group === group;
+                const exclusionMatch = excludeCard ? c.name !== excludeCard.name : true;
+                return rarityMatch && groupMatch && exclusionMatch;
+            });
+            if (cardPool.length === 0) {
+                return null;
+            }
+            return cardPool[Math.floor(Math.random() * cardPool.length)];
+        }
+
+        function renderChoices(choices) {
+            elements.cardChoicesContainer.innerHTML = '';
+            choices.forEach(pair => {
+                const cardGroupDiv = document.createElement('div');
+                cardGroupDiv.classList.add('card-group');
+                cardGroupDiv.onclick = () => selectCards(pair);
+                
+                pair.forEach(card => {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.classList.add('card-pair');
+                    if (card) {
+                        cardDiv.innerHTML = `<p class="card-name">${card.name}</p>`;
+                    } else {
+                        cardDiv.innerHTML = `<p class="card-name">カードなし</p>`;
+                    }
+                    cardGroupDiv.appendChild(cardDiv);
+                });
+                elements.cardChoicesContainer.appendChild(cardGroupDiv);
+            });
+        }
+
+        function selectCards(cards) {
+            cards.forEach(card => {
+                if (card) {
+                    addCardToDeck(card);
+                }
+            });
+            pickNext();
+        }
+        
+        function addCardToDeck(card) {
+            if (state.deck[card.name]) {
+                state.deck[card.name].count++;
+            } else {
+                state.deck[card.name] = { ...card, count: 1 };
+            }
+            state.cardsInDeckCount++;
+            addLog(`>> ${card.name} を選択しました。`);
+            updateDeckDisplay();
+        }
+
+        elements.rerollButton.onclick = () => {
+            if (state.rerollCount > 0) {
+                state.rerollCount--;
+                elements.rerollButton.textContent = `再抽選 (残り ${state.rerollCount}回)`;
+                addLog(`>> 再抽選を実行しました。残り${state.rerollCount}回。`);
+                
+                const rerollChoices = [];
+                const allCards = cardData[state.currentClass].cards;
+                for (let i = 0; i < 2; i++) {
+                    const card1 = allCards[Math.floor(Math.random() * allCards.length)];
+                    let card2 = null;
+                    let attempts = 0;
+                    do {
+                        card2 = allCards[Math.floor(Math.random() * allCards.length)];
+                        attempts++;
+                    } while (card1 && card2 && card1.name === card2.name && attempts < 10);
+                    rerollChoices.push([card1, card2]);
+                }
+                renderChoices(rerollChoices);
+
+            } else {
+                addLog(`>> 再抽選回数がありません。`);
+            }
+        };
+
+        function updateDeckDisplay() {
+            elements.currentDeck.innerHTML = '';
+            const sortedDeck = Object.values(state.deck).sort((a, b) => a.rarity.localeCompare(b.rarity));
+            sortedDeck.forEach(card => {
+                const li = document.createElement('li');
+                li.textContent = `${card.name} x${card.count}`;
+                elements.currentDeck.appendChild(li);
+            });
+        }
+
+        function endSimulation() {
+            elements.pickPhase.style.display = 'none';
+            elements.statusMessage.textContent = "デッキが完成しました！";
+            addLog(">> デッキ完成！");
+        }
+
+        function addLog(message) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            elements.log.prepend(p);
+        }
+
+        initializeSimulator();
+    </script>
+</body>
+</html>
