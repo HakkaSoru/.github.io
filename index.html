@@ -239,6 +239,7 @@
             { name: "勇気に満ちし者", rarity: "ゴールド", group: "new" },
             { name: "試練の石板", rarity: "ゴールド", group: "new" },
             { name: "絶大の顕現マゼルベイン", rarity: "レジェンド", group: "new" },
+            
             { name: "探偵のルーペ", rarity: "ブロンズ", group: "normal" },
             { name: "不屈のファイター", rarity: "ブロンズ", group: "normal" },
             { name: "ベルエンジェルリア", rarity: "ブロンズ", group: "normal" },
@@ -474,7 +475,7 @@
                     { name: "煌牙の義勇キット", rarity: "シルバー", group: "normal" },
                     { name: "炎竜の剣", rarity: "シルバー", group: "normal" },
                     { name: "宿願のドラゴニュートプリンセス", rarity: "シルバー", group: "normal" },
-                    { name: 歴戦のマーマン"", rarity: "シルバー", group: "normal" },
+                    { name: "歴戦のマーマン", rarity: "シルバー", group: "normal" },
 
                     { name: "乙姫の扇", rarity: "ゴールド", group: "normal" },
                     { name: "栄弦の天宮リュウフウ", rarity: "ゴールド", group: "normal" },
@@ -656,20 +657,20 @@
         };
 
         const pickProbability = [
-            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
-            { rarity: "シルバー", groups: { "normal": 1.0 } },
-            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
-            { rarity: "シルバー", groups: { "normal": 1.0 } },
-            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
-            { rarity: "ゴールド", groups: { "normal": 1.0 } },
-            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
-            { rarity: "シルバー", groups: { "normal": 1.0 } },
-            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
-            { rarity: "シルバー", groups: { "normal": 1.0 } },
-            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
-            { rarity: "シルバー", groups: { "normal": 1.0 } },
-            { rarity: "ブロンズ", groups: { "normal": 1.0 } },
-            { rarity: "ゴールド/レジェンド", groups: { "normal": 1.0 } }
+            { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
+            { rarity: "シルバー", groups: { "normal": 0.78, "new": 0.22 } },
+            { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
+            { rarity: "シルバー", groups: { "normal": 0.78, "new": 0.22 } },
+            { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
+            { rarity: "ゴールド", groups: { "normal": 0.7, "new": 0.3 } },
+            { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
+            { rarity: "シルバー", groups: { "normal": 0.78, "new": 0.22 } },
+            { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
+            { rarity: "シルバー", groups: { "normal": 0.78, "new": 0.22 } },
+            { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
+            { rarity: "シルバー", groups: { "normal": 0.78, "new": 0.22 } },
+            { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
+            { rarity: "ゴールド/レジェンド", groups: { "normal": 0.68, "new": 0.32 } }
         ];
 
         const state = {
