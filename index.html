@@ -765,18 +765,21 @@
             function getChoicesForPick(pickIndex) {
                 const pickInfo = pickProbability[pickIndex];
                 const choices = [];
+                let allCardsForPick = [];
 
-                for (let i = 0; i < 2; i++) {
+                // 抽選対象の4枚をまとめて選ぶ
+                for (let i = 0; i < 4; i++) {
                     const group = weightedRandom(pickInfo.groups);
-                    const card1 = getRandomCard(pickInfo.rarity, group);
-                    const card2 = getRandomCard(pickInfo.rarity, group, card1);
-                    
-                    if (card1 && card2) {
-                        choices.push([card1, card2]);
-                    } else {
-                        choices.push([]);
+                    const card = getRandomCard(pickInfo.rarity, group, allCardsForPick);
+                    if (card) {
+                        allCardsForPick.push(card);
                     }
                 }
+                
+                // 4枚を2枚ずつのペアに分割
+                choices.push([allCardsForPick[0], allCardsForPick[1]]);
+                choices.push([allCardsForPick[2], allCardsForPick[3]]);
+                
                 return choices;
             }
 
@@ -793,7 +796,7 @@
                 return Object.keys(weights)[0];
             }
 
-            function getRandomCard(rarity, group, excludeCard = null) {
+            function getRandomCard(rarity, group, excludeCards = []) {
                 const cardPool = cardData[state.currentClass].cards.filter(c => {
                     let rarityMatch = false;
                     if (rarity === "ゴールド/レジェンド") {
@@ -802,7 +805,7 @@
                         rarityMatch = c.rarity === rarity;
                     }
                     const groupMatch = c.group === group;
-                    const exclusionMatch = excludeCard ? c.name !== excludeCard.name : true;
+                    const exclusionMatch = !excludeCards.some(ec => ec.name === c.name);
                     
                     const isClassCard = cardData[state.currentClass].classCards.some(cc => cc.name === c.name);
                     const isNeutralCard = neutralCards.some(nc => nc.name === c.name);
