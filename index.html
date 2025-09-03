@@ -215,8 +215,9 @@
 
             <div id="pick-phase" style="display: none;">
                 <h2>ピック段階 <span id="pick-count"></span></h2>
+                <p>デッキ枚数：<span id="deck-card-count">0</span>枚</p>
                 <div class="card-choices-container" id="card-choices-container"></div>
-                <button id="reroll-button" class="button">再抽選 (残り <span id="reroll-count">2</span>回)</button>
+                <button id="reroll-button" class="button">再抽選 (残り <span id="reroll-count"></span>回)</button>
             </div>
             
             <div class="deck-list-container">
@@ -645,6 +646,11 @@
             },
         };
 
+        // 全クラスのカードにニュートラルカードを追加
+        for (const className in cardData) {
+            cardData[className].cards = [...cardData[className].classCards, ...neutralCards];
+        }
+
         const pickProbability = [
             { rarity: "ブロンズ", groups: { "normal": 0.79, "new": 0.21 } },
             { rarity: "シルバー", groups: { "normal": 0.78, "new": 0.22 } },
@@ -681,11 +687,13 @@
             currentDeck: document.getElementById('current-deck'),
             log: document.getElementById('log'),
             statusMessage: document.getElementById('status-message'),
+            deckCardCount: document.getElementById('deck-card-count')
         };
 
         function initializeSimulator() {
             renderClassSelection();
             elements.rerollButton.textContent = `再抽選 (残り ${state.rerollCount}回)`;
+            updateDeckCardCountDisplay();
         }
 
         function getGuaranteedCards(className) {
@@ -734,15 +742,14 @@
             elements.classSelection.style.display = 'none';
             elements.pickPhase.style.display = 'block';
             
-            // cardsInDeckCountを確定カード分は加算せず、最初のピックへ
             state.pickCount = 0;
-            elements.pickCountDisplay.textContent = `1/14`; // 最初のピックは1回目
+            elements.pickCountDisplay.textContent = `${state.pickCount}/14`;
             
             pickNext();
         }
 
         function pickNext() {
-            if (state.cardsInDeckCount >= 30) {
+            if (state.pickCount >= 14) {
                 endSimulation();
                 return;
             }
@@ -787,15 +794,19 @@
 
         function getRandomCard(rarity, group, excludeCard = null) {
             const cardPool = cardData[state.currentClass].cards.filter(c => {
-                const rarityMatch = rarity === "ゴールド/レジェンド" ?
-                    (c.rarity === "ゴールド" || c.rarity === "レジェンド") :
-                    c.rarity === rarity;
+                let rarityMatch = false;
+                if (rarity === "ゴールド/レジェンド") {
+                    rarityMatch = c.rarity === "ゴールド" || c.rarity === "レジェンド";
+                } else {
+                    rarityMatch = c.rarity === rarity;
+                }
                 const groupMatch = c.group === group;
                 const exclusionMatch = excludeCard ? c.name !== excludeCard.name : true;
                 
-                const classMatch = c.class === undefined || c.class === "ニュートラル" || c.class === state.currentClass;
-                
-                return rarityMatch && groupMatch && exclusionMatch && classMatch;
+                const isClassCard = cardData[state.currentClass].classCards.some(cc => cc.name === c.name);
+                const isNeutralCard = neutralCards.some(nc => nc.name === c.name);
+
+                return rarityMatch && groupMatch && exclusionMatch && (isClassCard || isNeutralCard);
             });
             if (cardPool.length === 0) {
                 return null;
@@ -877,6 +888,11 @@
                 li.textContent = `${card.name} x${card.count}`;
                 elements.currentDeck.appendChild(li);
             });
+            updateDeckCardCountDisplay();
+        }
+
+        function updateDeckCardCountDisplay() {
+            elements.deckCardCount.textContent = state.cardsInDeckCount;
         }
 
         function endSimulation() {
