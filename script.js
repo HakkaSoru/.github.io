@@ -46,7 +46,7 @@ window.onload = function () {
         deck: {},
         pickCount: 0,
         rerollCount: 0,
-        cardsInDeckCount: 0
+        cardsInDeckCount: 0,
         pickProbability: []
     };
 
@@ -620,5 +620,6 @@ window.onload = function () {
     // --- 初期化処理 ---
     initializeSimulator();
 };
+
 
 
