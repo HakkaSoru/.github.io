@@ -85,6 +85,9 @@ window.onload = function () {
 
         // ★ 修正点: 選択されたクラスに基づいて確率テーブルを生成
         generatePickProbabilityTable(className);
+        
+        console.log(`--- ${className} のピック確率テーブル ---`);
+        console.table(state.pickProbability);
 
         const currentModeSettings = gameSettings[state.currentMode];
         state.rerollCount = currentModeSettings.rerollCounts[className];
@@ -617,4 +620,5 @@ window.onload = function () {
     // --- 初期化処理 ---
     initializeSimulator();
 };
+
 
