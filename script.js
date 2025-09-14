@@ -40,28 +40,6 @@ window.onload = function () {
         cardData[className].cards = [...cardData[className].classCards, ...neutralCards];
     }
 
-    const pickProbability = [
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "シルバー", groups: { "normal": 0.63, "new": 0.2, "normal-n": 0.14, "new-n": 0.03, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "シルバー", groups: { "normal": 0.63, "new": 0.2, "normal-n": 0.14, "new-n": 0.03, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "ゴールド", groups: { "normal": 0.62, "new": 0.21, "normal-n": 0.11, "new-n": 0.06, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "シルバー", groups: { "normal": 0.63, "new": 0.2, "normal-n": 0.14, "new-n": 0.03, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "シルバー", groups: { "normal": 0.63, "new": 0.2, "normal-n": 0.14, "new-n": 0.03, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "シルバー", groups: { "normal": 0.63, "new": 0.2, "normal-n": 0.14, "new-n": 0.03, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "ゴールド/レジェンド", groups: { "normal": 0.59, "new": 0.24, "normal-n": 0.11, "new-n": 0.06, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "シルバー", groups: { "normal": 0.63, "new": 0.2, "normal-n": 0.14, "new-n": 0.03, } },
-        { rarity: "ブロンズ", groups: { "normal": 0.65, "new": 0.18, "normal-n": 0.13, "new-n": 0.04, } },
-        { rarity: "シルバー", groups: { "normal": 0.63, "new": 0.2, "normal-n": 0.14, "new-n": 0.03, } },
-        { rarity: "ゴールド/レジェンド", groups: { "normal": 0.59, "new": 0.24, "normal-n": 0.11, "new-n": 0.06, } },
-    ];
-
     const state = {
         currentMode: 'mode40', // ★ 追加: 現在のモードを管理
         currentClass: null,
@@ -69,6 +47,7 @@ window.onload = function () {
         pickCount: 0,
         rerollCount: 0,
         cardsInDeckCount: 0
+        pickProbability: []
     };
 
     const elements = {
@@ -104,23 +83,24 @@ window.onload = function () {
         state.cardsInDeckCount = 0;
         state.deck = {};
 
+        // ★ 修正点: 選択されたクラスに基づいて確率テーブルを生成
+        generatePickProbabilityTable(className);
+
         const currentModeSettings = gameSettings[state.currentMode];
         state.rerollCount = currentModeSettings.rerollCounts[className];
         elements.rerollCount.textContent = state.rerollCount;
-
-        // ★★★ 修正箇所 ★★★
-        // モード切替と更新ボタンを含むエリア全体を非表示にする
+                
         elements.modeSelection.style.display = 'none';
 
         addCardToDeck(guaranteedCards[0]);
         addCardToDeck(guaranteedCards[1]);
-
+                
         elements.classSelection.style.display = 'none';
         elements.pickPhase.style.display = 'block';
-
+                
         state.pickCount = 0;
         elements.pickCountDisplay.textContent = `${state.pickCount}/${currentModeSettings.pickCount}`;
-
+                
         pickNext();
     }
 
@@ -139,9 +119,10 @@ window.onload = function () {
         renderChoices(choices);
     }
 
-    // ★ 修正: 無限ループ対策済みのものを採用
     function getChoicesForPick(pickIndex) {
-        const pickInfo = pickProbability[pickIndex];
+        // ★ 修正点: stateに保存された確率テーブルを参照
+        const pickInfo = state.pickProbability[pickIndex];
+                
         const choices = [];
         const allCardsForPick = [];
         for (let i = 0; i < 4; i++) {
@@ -167,7 +148,7 @@ window.onload = function () {
             } else {
                 allCardsForPick.push(null);
             }
-        }
+         }
         choices.push([allCardsForPick[0], allCardsForPick[1]]);
         choices.push([allCardsForPick[2], allCardsForPick[3]]);
         return choices;
@@ -196,6 +177,80 @@ window.onload = function () {
     }
 
     // --- ここから下の関数は、ほぼ変更なし、または以前の修正を統合 ---
+
+
+    /**
+    * 指定されたクラスとレアリティのカードをグループ毎に枚数を数える
+    */
+    function getCardCountsByGroup(className, rarity) {
+        const counts = { normal: 0, new: 0, normal_n: 0, new_n: 0 };
+        const isGoldLegend = rarity === "ゴールド/レジェンド";
+
+        // クラスカードを数える
+        cardData[className].classCards.forEach(card => {
+            const rarityMatch = isGoldLegend ? (card.rarity === "ゴールド" || card.rarity === "レジェンド") : (card.rarity === rarity);
+            if (rarityMatch) {
+                if (card.group === 'new') counts.new++;
+                if (card.group === 'normal') counts.normal++;
+            }
+        });
+
+        // ニュートラルカードを数える
+        neutralCards.forEach(card => {
+            const rarityMatch = isGoldLegend ? (card.rarity === "ゴールド" || card.rarity === "レジェンド") : (card.rarity === rarity);
+            if (rarityMatch) {
+                if (card.group === 'new-n') counts.new_n++;
+                if (card.group === 'normal-n') counts.normal_n++;
+            }
+        });
+        return counts;
+    }
+
+    /**
+     * カード枚数とルールに基づき、提示確率のオブジェクトを計算する
+     */
+    function calculateProbabilities(counts, targetNeutralRate = 0.15) {
+        const probs = { normal: 0, new: 0, "normal-n": 0, "new-n": 0 };
+                
+        const W_NEW = 1.2; // "new"カードの重み
+
+        // クラスカードの合計重みを計算
+        const totalClassWeight = counts.normal + (counts.new * W_NEW);
+        // ニュートラルカードの合計重みを計算
+        const totalNeutralWeight = counts.normal_n + (counts.new_n * W_NEW);
+
+        const targetClassRate = 1 - targetNeutralRate;
+
+        // 各グループの確率を計算
+        if (totalClassWeight > 0) {
+            probs.normal = targetClassRate * counts.normal / totalClassWeight;
+            probs.new = targetClassRate * (counts.new * W_NEW) / totalClassWeight;
+        }
+                
+        if (totalNeutralWeight > 0) {
+            probs['normal-n'] = targetNeutralRate * counts.normal_n / totalNeutralWeight;
+            probs['new-n'] = targetNeutralRate * (counts.new_n * W_NEW) / totalNeutralWeight;
+        }
+
+        return probs;
+    }
+
+    /**
+     * 19回分のピック確率テーブルを生成し、stateに保存する
+     */
+    function generatePickProbabilityTable(className) {
+        const originalPickRarities = [
+            "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ", 
+            "シルバー", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ",
+            "ゴールド/レジェンド", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ゴールド/レジェンド"
+        ];
+
+        state.pickProbability = originalPickRarities.map(rarity => {
+            const counts = getCardCountsByGroup(className, rarity);
+            const groups = calculateProbabilities(counts);
+            return { rarity, groups };
+        });
+    }
 
     function initializeSimulator() {
         renderClassSelection();
@@ -562,3 +617,4 @@ window.onload = function () {
     // --- 初期化処理 ---
     initializeSimulator();
 };
+
