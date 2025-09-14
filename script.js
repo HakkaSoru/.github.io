@@ -160,7 +160,7 @@ window.onload = function () {
     // ★ 修正: 3枚制限を実装済みのものを採用
     function getRandomCard(rarity, group, excludeCards = []) {
         const cardPool = cardData[state.currentClass].cards.filter(c => {
-            if (state.deck[c.name] && state.deck[c.name].count >= 3) {
+            if (state.currentMode === 'mode40' && state.deck[c.name] && state.deck[c.name].count >= 3) {
                 return false;
             }
             let rarityMatch = false;
@@ -620,6 +620,7 @@ window.onload = function () {
     // --- 初期化処理 ---
     initializeSimulator();
 };
+
 
 
 
