@@ -47,7 +47,8 @@ window.onload = function () {
         pickCount: 0,
         rerollCount: 0,
         cardsInDeckCount: 0,
-        pickProbability: []
+        pickProbability: [],
+        rerollProbability: {}
     };
 
     const elements = {
@@ -83,27 +84,31 @@ window.onload = function () {
         state.cardsInDeckCount = 0;
         state.deck = {};
 
-        // ★ 修正点: 選択されたクラスに基づいて確率テーブルを生成
+        // 通常ピック用の確率テーブルを生成
         generatePickProbabilityTable(className);
-        
-        console.log(`--- ${className} のピック確率テーブル ---`);
-        console.table(state.pickProbability);
+
+        // ★ 追加: 再抽選用の確率テーブルを生成
+        calculateRerollProbabilities(className);
+
+        // デバッグ用に、再抽選の確率をコンソールに出力
+        console.log(`--- ${className} の再抽選グループ確率 ---`);
+        console.log(state.rerollProbability);
 
         const currentModeSettings = gameSettings[state.currentMode];
         state.rerollCount = currentModeSettings.rerollCounts[className];
         elements.rerollCount.textContent = state.rerollCount;
-                
+
         elements.modeSelection.style.display = 'none';
 
         addCardToDeck(guaranteedCards[0]);
         addCardToDeck(guaranteedCards[1]);
-                
+
         elements.classSelection.style.display = 'none';
         elements.pickPhase.style.display = 'block';
-                
+
         state.pickCount = 0;
         elements.pickCountDisplay.textContent = `${state.pickCount}/${currentModeSettings.pickCount}`;
-                
+
         pickNext();
     }
 
@@ -123,38 +128,38 @@ window.onload = function () {
     }
 
     function getChoicesForPick(pickIndex) {
-        // ★ 修正点: stateに保存された確率テーブルを参照
         const pickInfo = state.pickProbability[pickIndex];
-                
-        const choices = [];
-        const allCardsForPick = [];
-        for (let i = 0; i < 4; i++) {
-            let selectedCard = null;
-            let attempts = 0;
-            while (!selectedCard && attempts < 50) {
-                const group = weightedRandom(pickInfo.groups);
-                const potentialCard = getRandomCard(pickInfo.rarity, group, allCardsForPick);
-                if (potentialCard) selectedCard = potentialCard;
-                attempts++;
-            }
-            if (!selectedCard) {
-                attempts = 0;
-                while (!selectedCard && attempts < 50) {
-                    const group = weightedRandom(pickInfo.groups);
-                    const potentialCard = getRandomCard(pickInfo.rarity, group);
-                    if (potentialCard) selectedCard = potentialCard;
-                    attempts++;
+        const uniqueCards = [];
+        let attempts = 0; // 無限ループ防止用のカウンター
+
+        // まず、ユニークなカードを4枚集めることを試みる
+        while (uniqueCards.length < 4 && attempts < 100) {
+            const group = weightedRandom(pickInfo.groups);
+            // まずカードを1枚取得してみる
+            const potentialCard = getRandomCard(pickInfo.rarity, group, []);
+
+            if (potentialCard) {
+                // それが既に候補リストになければ追加する
+                const isDuplicate = uniqueCards.some(c => c.name === potentialCard.name);
+                if (!isDuplicate) {
+                    uniqueCards.push(potentialCard);
                 }
             }
-            if (selectedCard) {
-                allCardsForPick.push(selectedCard);
-            } else {
-                allCardsForPick.push(null);
-            }
-         }
-        choices.push([allCardsForPick[0], allCardsForPick[1]]);
-        choices.push([allCardsForPick[2], allCardsForPick[3]]);
-        return choices;
+            attempts++;
+        }
+
+        // もしユニークなカードが4枚集まらなかった場合 (カードプールが枯渇した)
+        // 残りのスロットを、重複を許可して埋める
+        while (uniqueCards.length < 4) {
+            const group = weightedRandom(pickInfo.groups);
+            const fillCard = getRandomCard(pickInfo.rarity, group, []);
+            uniqueCards.push(fillCard || { name: "（候補なし）", id: "", cost: 0 });
+        }
+
+        return [
+            [uniqueCards[0], uniqueCards[1]],
+            [uniqueCards[2], uniqueCards[3]]
+        ];
     }
 
     // ★ 修正: 3枚制限を実装済みのものを採用
@@ -214,7 +219,7 @@ window.onload = function () {
      */
     function calculateProbabilities(counts, targetNeutralRate = 0.15) {
         const probs = { normal: 0, new: 0, "normal-n": 0, "new-n": 0 };
-                
+
         const W_NEW = 1.2; // "new"カードの重み
 
         // クラスカードの合計重みを計算
@@ -229,7 +234,7 @@ window.onload = function () {
             probs.normal = targetClassRate * counts.normal / totalClassWeight;
             probs.new = targetClassRate * (counts.new * W_NEW) / totalClassWeight;
         }
-                
+
         if (totalNeutralWeight > 0) {
             probs['normal-n'] = targetNeutralRate * counts.normal_n / totalNeutralWeight;
             probs['new-n'] = targetNeutralRate * (counts.new_n * W_NEW) / totalNeutralWeight;
@@ -243,7 +248,7 @@ window.onload = function () {
      */
     function generatePickProbabilityTable(className) {
         const originalPickRarities = [
-            "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ", 
+            "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ",
             "シルバー", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ",
             "ゴールド/レジェンド", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ゴールド/レジェンド"
         ];
@@ -253,6 +258,50 @@ window.onload = function () {
             const groups = calculateProbabilities(counts);
             return { rarity, groups };
         });
+    }
+
+    /**
+    * クラス全体のカードプールから、再抽選用のグループ提示確率を計算し、stateに保存する
+    */
+    function calculateRerollProbabilities(className) {
+        const totalCounts = { normal: 0, new: 0, normal_n: 0, new_n: 0 };
+
+        // クラスの全カード（ニュートラル含む）をループして枚数を数える
+        cardData[className].cards.forEach(card => {
+            if (card.group === 'new') totalCounts.new++;
+            else if (card.group === 'normal') totalCounts.normal++;
+            else if (card.group === 'new-n') totalCounts.new_n++;
+            else if (card.group === 'normal-n') totalCounts.normal_n++;
+        });
+
+        // 既存の確率計算ロジックを再利用して、stateに保存
+        state.rerollProbability = calculateProbabilities(totalCounts);
+    }
+
+    /**
+     * 指定されたグループに属するカードを、レアリティを問わずランダムに1枚返す
+     */
+    function getRandomCardFromGroup(group, excludeCards = []) {
+        const cardPool = cardData[state.currentClass].cards.filter(c => {
+            // グループが一致するか
+            if (c.group !== group) return false;
+
+            // 3枚制限のチェック (40枚モードのみ)
+            if (state.currentMode === 'mode40' && state.deck[c.name] && state.deck[c.name].count >= 3) {
+                return false;
+            }
+
+            // この再抽選内での重複チェック
+            const isExcluded = excludeCards.some(ec => ec && ec.name === c.name);
+            if (isExcluded) return false;
+
+            return true;
+        });
+
+        if (cardPool.length === 0) {
+            return null;
+        }
+        return cardPool[Math.floor(Math.random() * cardPool.length)];
     }
 
     function initializeSimulator() {
@@ -330,19 +379,37 @@ window.onload = function () {
             state.rerollCount--;
             elements.rerollCount.textContent = state.rerollCount;
             addLog(`>> 再抽選を実行しました。残り${state.rerollCount}回。`);
+
             const rerollChoices = [];
-            const allCards = cardData[state.currentClass].cards;
-            for (let i = 0; i < 2; i++) {
-                const card1 = allCards[Math.floor(Math.random() * allCards.length)];
-                let card2 = null;
+            const pickedCardsForReroll = [];
+
+            // 4枚のユニークなカードを再抽選で選ぶ
+            for (let i = 0; i < 4; i++) {
+                let selectedCard = null;
                 let attempts = 0;
-                do {
-                    card2 = allCards[Math.floor(Math.random() * allCards.length)];
+                // ユニークなカードが見つかるまで試行
+                while (!selectedCard && attempts < 100) {
+                    // 1. 全レアリティ対象の確率テーブルからグループを決定
+                    const group = weightedRandom(state.rerollProbability);
+
+                    // 2. そのグループに属するカードをヘルパー関数で取得
+                    const potentialCard = getRandomCardFromGroup(group, pickedCardsForReroll);
+
+                    if (potentialCard) {
+                        selectedCard = potentialCard;
+                    }
                     attempts++;
-                } while (card1 && card2 && card1.name === card2.name && attempts < 10);
-                rerollChoices.push([card1, card2]);
+                }
+                // 最終的に選ばれたカードを候補に追加
+                pickedCardsForReroll.push(selectedCard || { name: "（候補なし）", id: "", cost: 0 });
             }
-            renderChoices(rerollChoices);
+
+            // 新しい選択肢を画面に表示
+            renderChoices([
+                [pickedCardsForReroll[0], pickedCardsForReroll[1]],
+                [pickedCardsForReroll[2], pickedCardsForReroll[3]]
+            ]);
+
         } else {
             addLog(`>> 再抽選回数がありません。`);
         }
