@@ -246,19 +246,32 @@ window.onload = function () {
     /**
      * 19回分のピック確率テーブルを生成し、stateに保存する
      */
-    function generatePickProbabilityTable(className) {
-        const originalPickRarities = [
-            "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ",
-            "シルバー", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ",
-            "ゴールド/レジェンド", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ゴールド/レジェンド"
-        ];
+function generatePickProbabilityTable(className) {
+                const originalPickRarities = [
+                    "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ", 
+                    "シルバー", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ",
+                    "ゴールド/レジェンド", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ゴールド/レジェンド"
+                ];
 
-        state.pickProbability = originalPickRarities.map(rarity => {
-            const counts = getCardCountsByGroup(className, rarity);
-            const groups = calculateProbabilities(counts);
-            return { rarity, groups };
-        });
-    }
+                // ★★★ ここからが追加箇所 ★★★
+                // デバッグ用に、各レアリティのカード枚数カウント結果をコンソールに出力
+                console.log(`--- ${className} のカード枚数カウント結果 ---`);
+                const countsTable = originalPickRarities.map(rarity => {
+                    const counts = getCardCountsByGroup(className, rarity);
+                    return {
+                        Rarity: rarity,
+                        ...counts
+                    };
+                });
+                console.table(countsTable);
+                // ★★★ ここまで ★★★
+
+                state.pickProbability = originalPickRarities.map(rarity => {
+                    const counts = getCardCountsByGroup(className, rarity);
+                    const groups = calculateProbabilities(counts, gameSettings.neutralCardRate);
+                    return { rarity, groups };
+                });
+            }
 
     /**
     * クラス全体のカードプールから、再抽選用のグループ提示確率を計算し、stateに保存する
@@ -687,6 +700,7 @@ window.onload = function () {
     // --- 初期化処理 ---
     initializeSimulator();
 };
+
 
 
 
