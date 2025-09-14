@@ -109,7 +109,7 @@ const cardData = {
             { id: "10121140", name: "ミリタリードッグ", cost: 3, rarity: "ブロンズ", group: "normal" },
             { id: "10121310", name: "剣士の斬撃", cost: 4, rarity: "ブロンズ", group: "normal" },
             { id: "10121120", name: "ピースディーラーエルネスタ", cost: 6, rarity: "ブロンズ", group: "normal" },
-            { id: "10221310", name: "商談成立", cost: 0, rarity: "ブロンズ", group: "normal" },
+            { id: "10221310", name: "商談成立", cost: 2, rarity: "ブロンズ", group: "normal" },
             { id: "10221120", name: "暗闘のニンジャマスター", cost: 5, rarity: "ブロンズ", group: "normal" },
             { id: "10221110", name: "トリガーメイドセリエ", cost: 2, rarity: "ブロンズ", group: "normal" },
 
@@ -410,4 +410,5 @@ const cardData = {
             { id: "10274110", name: "シンフォニアハートツヴァイ", cost: 5, rarity: "レジェンド", group: "normal" },
         ]
     },
+
 };
