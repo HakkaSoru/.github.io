@@ -288,3 +288,19 @@ h3 {
     margin-top: 1rem; /* 見出しの直後の段落だけ少しスペースを空ける */
 }
 
+/* --- フッター用のスタイル --- */
+#page-footer {
+    width: 100%;
+    max-width: 960px;
+    margin: 2rem auto 0 auto; /* 上に余白を設ける */
+    padding: 1.5rem;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #4b5563; /* 少し薄めの文字色 */
+    border-top: 1px solid #e5e7eb; /* 上部に区切り線を入れる */
+}
+
+#page-footer p {
+    margin: 0.5rem 0; /* 段落ごとの上下の余白 */
+}
