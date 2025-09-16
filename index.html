@@ -18,6 +18,21 @@
                 <button id="mode-40-button" class="button">40枚モード</button>
                 <button id="mode-30-button" class="button">30枚モード</button>
                 <p style="margin-top: 1rem; font-weight: 600;">現在のモード: <span id="current-mode-display">40枚</span></p>
+
+                <div id="settings-container">
+                    <h4>詳細設定</h4>
+                    <div class="setting-item">
+                        <label for="neutral-rate-input">Nカード出現率:</label>
+                        <input type="number" id="neutral-rate-input" step="0.01" min="0" max="1" placeholder="規定値: 0.15">
+                        <span>(現在: <span id="current-neutral-rate">0.15</span>)</span>
+                    </div>
+                    <div class="setting-item">
+                        <label for="wnew-input">新弾カード補正:</label>
+                        <input type="number" id="wnew-input" step="0.1" min="0" max="10" placeholder="規定値: 1.2">
+                        <span>(現在: <span id="current-wnew">1.2</span>)</span>
+                    </div>
+                    <button id="apply-settings-button" class="button">設定を反映</button>
+                </div>
                 <button id="refresh-classes-button" class="button">提示カード更新</button>
             </div>
 
@@ -25,8 +40,6 @@
                 <h2>クラス選択</h2>
                 <div class="class-buttons" id="class-buttons"></div>
             </div>
-
-            <div class="class-buttons" id="class-buttons"></div>
 
             <div id="pick-phase" style="display: none;">
                 <h2>ピック段階 <span id="pick-count"></span></h2>
@@ -49,14 +62,52 @@
             <div id="log">
                 <h3>ログ</h3>
             </div>
-        </div>
+            
+            <div id="readme-container">
+                <h2>仕様</h2>
+
+                <h3>40枚モード</h3>
+                <p>ルームマッチで使用可能な40枚のデッキを2pickと同じ要領で作成するモード。</p>
+                <p>同じカードがデッキに4枚以上入らないように制限がかかっている。</p>
+                <p>また、ゲーム内で読み込めるQRコードや、shadowverse-wb.com(公式)でデッキコードを発行できるリンクを生成できる。</p>
+
+                <h3>30枚モード</h3>
+                <p>2pickと同じ要領で30枚のデッキを作成するモード。</p>
+                <p>枚数制限はない。練習用にどうぞ。</p>
+
+                <h3>詳細設定</h3>
+                <p>ニュートラルカード出現率、新弾(絶傑の継承者)カード出現率に補正をかけられる。</p>
+                <p>知る限りではどちらも統計データがないので、既定値は雰囲気で設定してある。</p>
+                <p>お好みの値を入力したら、「設定を反映」ボタンを押すと入力が反映される。</p>
+                <p>Nカード出現率を上限の1にするとNカードが大量に(実装とカードプールの都合で全てではない)出現する。</p>
+                <p>新弾カード補正は0で出現しなくなり、1で他のカードと同等、大きくするほど出現率が上がる。</p>
+                <p>あまり大きな値にすると抽選ロジックが壊れるので、最大値は10に設定している。</p>
+
+                <h3>カードのピック</h3>
+                <ul>
+                    <li>基本的には公式の仕様と同じ（はず）。新弾、ニュートラル、レアリティ以外の補正はない。</li>
+                    <li>カードの詳細は一切表示されない。</li>
+                    <li>同じカードは2つの選択肢に同時に提示されない。</li>
+                    <li>再抽選しても、同じカードが再度提示されることがある。</li>
+                    <li>40枚モードでは再抽選枚数が1回（ウィッチは2回）多く設定されている。</li>
+                </ul>
+
+                <h3>QRコード・リンクの生成</h3>
+                <p>下部のボタンからQRコード(40枚モード限定)、またはデッキリンクを生成できる。</p>
+                <p>QRコードを保存、スクショ等してゲーム内で読み込むと、直接デッキレシピが表示される。</p>
+                <p>リンクはshadowverse-wb.com(公式)に飛ぶもので、デッキコードを発行できる。これをゲームのデッキ作成画面で入力すれば、デッキレシピが転送される。</p>
+            </div>
+            <footer id="page-footer">
+            <p>当サイトは「Shadowverse: Worlds Beyond」の非公式ファンサイトです。</p>
+            <p>wwebアプリ内で表示されるカードのテキスト、その他の知的財産権は、すべて株式会社Cygamesに帰属します。</p>
+            </footer>
+            </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <script src="card-data.js"></script>
-
     <script src="script.js"></script>
 
 </body>

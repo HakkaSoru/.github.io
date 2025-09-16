@@ -147,26 +147,44 @@ h3 {
     background-color: #fff;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    align-self: center;
+    margin-top: 2rem;
 }
 
 .deck-list {
     margin-top: 1rem;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
     padding: 1rem;
 }
 
-.deck-list li {
+.deck-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 0.5rem 0;
     border-bottom: 1px solid #e5e7eb;
     font-size: 0.95rem;
 }
 
-.deck-list li:last-child {
+.deck-list-item:last-child {
     border-bottom: none;
 }
+
+.deck-list-cost {
+    display: inline-block;
+    width: 2em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.rarity-bronze { color: #cd7f32; }
+.rarity-silver { color: #c0c0c0; }
+.rarity-gold { color: #ffd700; }
+.rarity-legend { color: #e567a4; }
+
 
 #log {
     margin-top: 2rem;
@@ -189,10 +207,100 @@ h3 {
     border-bottom: none;
 }
 
-.completed-message {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #10b981;
+#settings-container {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+#settings-container h4 {
+    margin: 0 0 0.5rem 0;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.setting-item label {
+    font-weight: 600;
+}
+
+.setting-item input {
+    width: 80px;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid #d1d5db;
+}
+
+.setting-item span {
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+#readme-container {
     margin-top: 2rem;
+    width: 100%;
+    max-width: 960px;
+    align-self: center;
+    box-sizing: border-box;
+}
+
+#readme-container h2 {
+    margin-top: 0;
+}
+
+#readme-container h3 {
+    margin-top: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+#readme-container p, #readme-container ul {
+    text-align: left;
+    line-height: 1.6;
+}
+
+#readme-container p {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+#readme-container ul {
+    padding-left: 1.5rem;
+}
+#readme-container p {
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 1.6; /* 行自体の高さをリストと合わせる */
+}
+
+#readme-container h3 + p {
+    margin-top: 1rem; /* 見出しの直後の段落だけ少しスペースを空ける */
+}
+
+/* --- フッター用のスタイル --- */
+#page-footer {
+    width: 100%;
+    max-width: 960px;
+    margin: 2rem auto 0 auto; /* 上に余白を設ける */
+    padding: 1.5rem;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.875rem;
+    color: #4b5563; /* 少し薄めの文字色 */
+    border-top: 1px solid #e5e7eb; /* 上部に区切り線を入れる */
+}
+
+#page-footer p {
+    margin: 0.5rem 0; /* 段落ごとの上下の余白 */
 }

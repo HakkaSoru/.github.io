@@ -2,42 +2,23 @@
 
 // ゲームのルールに関する設定をここにまとめる
 const gameSettings = {
-    // 40枚モードの設定
     mode40: {
         pickCount: 19,
         targetDeckSize: 40,
-        rerollCounts: {
-            "エルフ": 3,
-            "ロイヤル": 3,
-            "ウィッチ": 7,
-            "ドラゴン": 3,
-            "ナイトメア": 3,
-            "ビショップ": 3,
-            "ネメシス": 3
-        }
+        rerollCounts: { "エルフ": 3, "ロイヤル": 3, "ウィッチ": 7, "ドラゴン": 3, "ナイトメア": 3, "ビショップ": 3, "ネメシス": 3 }
     },
-    // 30枚モードの設定
     mode30: {
         pickCount: 14,
         targetDeckSize: 30,
-        rerollCounts: {
-            "エルフ": 2,
-            "ロイヤル": 2,
-            "ウィッチ": 5,
-            "ドラゴン": 2,
-            "ナイトメア": 2,
-            "ビショップ": 2,
-            "ネメシス": 2
-        }
+        rerollCounts: { "エルフ": 2, "ロイヤル": 2, "ウィッチ": 5, "ドラゴン": 2, "ナイトメア": 2, "ビショップ": 2, "ネメシス": 2 }
     },
-    // ニュートラルカードの提示率
-    neutralCardRate: 0.15
+    userSettings: {
+        neutralCardRate: 0.15,
+        W_NEW: 1.2
+    }
 };
 
 window.onload = function () {
-    // cardData と neutralCards は card-data.js に分離されている前提
-
-    // 全クラスのカードにニュートラルカードを追加（初回のみ実行）
     for (const className in cardData) {
         cardData[className].cards = [...cardData[className].classCards, ...neutralCards];
     }
@@ -49,10 +30,9 @@ window.onload = function () {
         pickCount: 0,
         rerollCount: 0,
         cardsInDeckCount: 0,
-        classProbabilities: {
-            pick: {},
-            reroll: {}
-        }
+        classProbabilities: { pick: {}, reroll: {} },
+        // ▼▼▼ 追加 ▼▼▼
+        guaranteedCards: [] // 初期提示カードを保存
     };
 
     const elements = {
@@ -74,18 +54,24 @@ window.onload = function () {
         modeSelection: document.getElementById('mode-selection'),
         qrCodeContainer: document.getElementById('qrcode-container'),
         generateQrButton: document.getElementById('generate-qr-button'),
-        qrCodeDisplay: document.getElementById('qrcode-display')
+        qrCodeDisplay: document.getElementById('qrcode-display'),
+        settingsContainer: document.getElementById('settings-container'),
+        neutralRateInput: document.getElementById('neutral-rate-input'),
+        wnewInput: document.getElementById('wnew-input'),
+        applySettingsButton: document.getElementById('apply-settings-button'),
+        currentNeutralRate: document.getElementById('current-neutral-rate'),
+        currentWnew: document.getElementById('current-wnew')
     };
 
     let qrcode = null;
     let manaCurveChart = null;
 
-    // --- ここから関数の定義 ---
-
     function selectClass(className, guaranteedCards) {
         state.currentClass = className;
         state.cardsInDeckCount = 0;
         state.deck = {};
+        // ▼▼▼ 追加 ▼▼▼
+        state.guaranteedCards = guaranteedCards; // 初期カードをstateに保存
 
         generateProbabilityTables(className);
 
@@ -100,12 +86,15 @@ window.onload = function () {
 
         elements.classSelection.style.display = 'none';
         elements.pickPhase.style.display = 'block';
+        elements.settingsContainer.style.display = 'none';
 
         state.pickCount = 0;
         elements.pickCountDisplay.textContent = `${state.pickCount}/${currentModeSettings.pickCount}`;
 
         pickNext();
     }
+
+    // (pickNextからsortDeckForQrCodeの直前までは変更なし)
 
     function pickNext() {
         const currentModeSettings = gameSettings[state.currentMode];
@@ -140,30 +129,18 @@ window.onload = function () {
             attempts++;
         }
 
-        // カードプールが枯渇した場合のフォールバック
         while (uniqueCards.length < 4) {
             const group = weightedRandom(pickInfo.groups);
-            const fillCard = getRandomCard({
-                rarity: pickInfo.rarity,
-                group: group,
-            });
+            const fillCard = getRandomCard({ rarity: pickInfo.rarity, group: group, });
             uniqueCards.push(fillCard || { name: "（候補なし）", id: "", cost: 0 });
         }
 
-        return [
-            [uniqueCards[0], uniqueCards[1]],
-            [uniqueCards[2], uniqueCards[3]]
-        ];
+        return [[uniqueCards[0], uniqueCards[1]], [uniqueCards[2], uniqueCards[3]]];
     }
 
-    // ★ カード取得関数
     function getRandomCard(filters) {
         const cardPool = cardData[state.currentClass].cards.filter(c => {
-            // 3枚制限
-            if (state.currentMode === 'mode40' && state.deck[c.name] && state.deck[c.name].count >= 3) {
-                return false;
-            }
-            // レアリティ
+            if (state.currentMode === 'mode40' && state.deck[c.name] && state.deck[c.name].count >= 3) { return false; }
             if (filters.rarity) {
                 if (filters.rarity === "ゴールド/レジェンド") {
                     if (c.rarity !== "ゴールド" && c.rarity !== "レジェンド") return false;
@@ -171,14 +148,8 @@ window.onload = function () {
                     if (c.rarity !== filters.rarity) return false;
                 }
             }
-            // グループ
-            if (filters.group && c.group !== filters.group) {
-                return false;
-            }
-            // 除外リスト
-            if (filters.exclude && filters.exclude.some(ec => ec && ec.name === c.name)) {
-                return false;
-            }
+            if (filters.group && c.group !== filters.group) { return false; }
+            if (filters.exclude && filters.exclude.some(ec => ec && ec.name === c.name)) { return false; }
             return true;
         });
 
@@ -186,18 +157,13 @@ window.onload = function () {
         return cardPool[Math.floor(Math.random() * cardPool.length)];
     }
 
-
-    /**
-    * 指定されたクラスとレアリティのカードをグループ毎に枚数を数える
-    */
     function getCardCountsByGroup(className, rarity) {
         const counts = { normal: 0, new: 0, normal_n: 0, new_n: 0 };
         const isGoldLegend = rarity === "ゴールド/レジェンド";
-
-        const cardSource = rarity ? cardData[className].cards : cardData[className].classCards;
+        const cardSource = cardData[className].cards;
 
         cardSource.forEach(card => {
-            let rarityMatch = !rarity; // レアリティ指定がなければ常にtrue
+            let rarityMatch = !rarity;
             if (rarity) {
                 rarityMatch = isGoldLegend ? (card.rarity === "ゴールド" || card.rarity === "レジェンド") : (card.rarity === rarity);
             }
@@ -212,12 +178,9 @@ window.onload = function () {
         return counts;
     }
 
-    /**
-     * カード枚数とルールに基づき、提示確率のオブジェクトを計算する
-     */
-    function calculateProbabilities(counts, targetNeutralRate = 0.15) {
+    function calculateProbabilities(counts, targetNeutralRate) {
         const probs = { normal: 0, new: 0, "normal-n": 0, "new-n": 0 };
-        const W_NEW = 1.2;
+        const W_NEW = gameSettings.userSettings.W_NEW;
         const totalClassWeight = counts.normal + (counts.new * W_NEW);
         const totalNeutralWeight = counts.normal_n + (counts.new_n * W_NEW);
         const targetClassRate = 1 - targetNeutralRate;
@@ -233,9 +196,7 @@ window.onload = function () {
         return probs;
     }
 
-    // ピック用と再抽選用の確率テーブルをまとめて生成
     function generateProbabilityTables(className) {
-        // --- ピック用の確率テーブル生成 ---
         const pickRarities = [
             "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ",
             "シルバー", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ",
@@ -243,17 +204,18 @@ window.onload = function () {
         ];
         state.classProbabilities.pick = pickRarities.map(rarity => {
             const counts = getCardCountsByGroup(className, rarity);
-            const groups = calculateProbabilities(counts, gameSettings.neutralCardRate);
+            const groups = calculateProbabilities(counts, gameSettings.userSettings.neutralCardRate);
             return { rarity, groups };
         });
 
-        // --- 再抽選用の確率テーブル生成 ---
-        const rerollCounts = getCardCountsByGroup(className, null); // 全てのレアリティを対象
-        state.classProbabilities.reroll = calculateProbabilities(rerollCounts, gameSettings.neutralCardRate);
-
+        const rerollCounts = getCardCountsByGroup(className, null);
+        state.classProbabilities.reroll = calculateProbabilities(rerollCounts, gameSettings.userSettings.neutralCardRate);
     }
 
     function initializeSimulator() {
+        elements.currentNeutralRate.textContent = gameSettings.userSettings.neutralCardRate;
+        elements.currentWnew.textContent = gameSettings.userSettings.W_NEW;
+
         renderClassSelection();
         updateDeckCardCountDisplay();
         elements.mode40Button.style.backgroundColor = '#2563eb';
@@ -333,25 +295,18 @@ window.onload = function () {
         let attempts = 0;
         while (rerollChoices.length < 4 && attempts < 100) {
             const group = weightedRandom(state.classProbabilities.reroll);
-            const potentialCard = getRandomCard({
-                group: group,
-                exclude: rerollChoices
-            });
+            const potentialCard = getRandomCard({ group: group, exclude: rerollChoices });
             if (potentialCard) {
                 rerollChoices.push(potentialCard);
             }
             attempts++;
         }
 
-        // 枯渇した場合のフォールバック
         while (rerollChoices.length < 4) {
             rerollChoices.push({ name: "（候補なし）", id: "", cost: 0 });
         }
 
-        renderChoices([
-            [rerollChoices[0], rerollChoices[1]],
-            [rerollChoices[2], rerollChoices[3]]
-        ]);
+        renderChoices([[rerollChoices[0], rerollChoices[1]], [rerollChoices[2], rerollChoices[3]]]);
     };
 
     function sortDeck(deckObject) {
@@ -441,10 +396,10 @@ window.onload = function () {
 
     function sortDeckForQrCode(deck) {
         const sortedCards = [];
-        const sortedDeck = sortDeck(deck); // ソート処理を共通関数に任せる
+        // 整列はしないように変更
+        const deckAsArray = Object.values(deck);
 
-        // 共通関数はユニークなカードリストを返すので、枚数分展開する
-        sortedDeck.forEach(cardInfo => {
+        deckAsArray.forEach(cardInfo => {
             for (let i = 0; i < cardInfo.count; i++) {
                 sortedCards.push(cardInfo);
             }
@@ -489,31 +444,51 @@ window.onload = function () {
         }
     }
 
+    // ▼▼▼ ここから変更 ▼▼▼
     elements.generateQrButton.onclick = () => {
-        if (state.currentMode === 'mode30') {
-            addLog(">> 30枚モードではQRコードを生成できません。");
-            return;
-        }
-        const currentModeSettings = gameSettings[state.currentMode];
-        if (state.cardsInDeckCount !== currentModeSettings.targetDeckSize) {
-            addLog(`>> デッキが40枚未満のため、有効なQRコードを生成できません。`);
-            return;
-        }
-
-        const sortedIds = sortDeckForQrCode(state.deck);
-        const hashes = sortedIds.map(id => convertIdToHash(parseInt(id, 10)));
-        const hashString = hashes.join('.');
+        let deckUrl = '';
+        // classMapを関数の最初に定義して、両方のモードで使えるようにします
         const classMap = { "エルフ": 1, "ロイヤル": 2, "ウィッチ": 3, "ドラゴン": 4, "ナイトメア": 5, "ビショップ": 6, "ネメシス": 7 };
         const classNumber = classMap[state.currentClass] || 0;
-        const deckUrl = `https://shadowverse-wb.com/ja/deck/detail/?hash=2.${classNumber}.${hashString}`;
-        elements.qrCodeDisplay.style.display = 'block';
-        elements.qrCodeDisplay.innerHTML = '';
-        if (qrcode) {
-            qrcode.makeCode(deckUrl);
-        } else {
-            qrcode = new QRCode(elements.qrCodeDisplay, { text: deckUrl, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.L });
+
+        if (state.currentMode === 'mode40') {
+            if (state.cardsInDeckCount !== gameSettings.mode40.targetDeckSize) {
+                addLog(`>> デッキが40枚ではありません。QRコードを生成できません。`);
+                return;
+            }
+
+            const sortedIds = sortDeckForQrCode(state.deck);
+            const hashes = sortedIds.map(id => convertIdToHash(parseInt(id, 10)));
+            const hashString = hashes.join('.');
+            deckUrl = `https://shadowverse-wb.com/ja/deck/detail/?hash=2.${classNumber}.${hashString}`;
+
+            elements.qrCodeDisplay.style.display = 'block';
+            elements.qrCodeDisplay.innerHTML = '';
+            if (qrcode) {
+                qrcode.makeCode(deckUrl);
+            } else {
+                qrcode = new QRCode(elements.qrCodeDisplay, { text: deckUrl, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.L });
+            }
+            addLog(`>> QRコードを生成しました。`);
+
+        } else if (state.currentMode === 'mode30') {
+            if (state.cardsInDeckCount !== gameSettings.mode30.targetDeckSize) {
+                addLog(`>> デッキが30枚ではありません。リンクを生成できません。`);
+                return;
+            }
+
+            const deckIds = sortDeckForQrCode(state.deck);
+            const mainHashes = deckIds.map(id => convertIdToHash(parseInt(id, 10))).join('.');
+            const initialHashes = state.guaranteedCards.map(card => convertIdToHash(parseInt(card.id, 10))).join('.');
+
+            // ▼▼▼ この行を修正しました ▼▼▼
+            deckUrl = `https://shadowverse-wb.com/ja/deck/detail/?hash=6.${classNumber}.${mainHashes}|${initialHashes}`;
+
+            elements.qrCodeDisplay.style.display = 'none';
+            addLog(`>> デッキリンクを生成しました。`);
         }
-        addLog(`>> QRコードを生成しました。`);
+
+        // 共通のログ出力処理
         const logP = document.createElement('p');
         const logA = document.createElement('a');
         logA.href = deckUrl;
@@ -545,6 +520,23 @@ window.onload = function () {
         addLog(">> 提示カードを更新しました。");
     };
 
-    // --- 初期化処理 ---
+    elements.applySettingsButton.onclick = () => {
+        const newNeutralRate = parseFloat(elements.neutralRateInput.value);
+        const newWNew = parseFloat(elements.wnewInput.value);
+
+        if (!isNaN(newNeutralRate) && newNeutralRate >= 0 && newNeutralRate <= 1) {
+            gameSettings.userSettings.neutralCardRate = newNeutralRate;
+        }
+        if (!isNaN(newWNew) && newWNew >= 0 && newWNew <= 10) {
+            gameSettings.userSettings.W_NEW = newWNew;
+        }
+
+        elements.currentNeutralRate.textContent = gameSettings.userSettings.neutralCardRate;
+        elements.currentWnew.textContent = gameSettings.userSettings.W_NEW;
+
+        renderClassSelection();
+        addLog(">> 設定を反映し、提示カードを更新しました。");
+    };
+
     initializeSimulator();
 };
