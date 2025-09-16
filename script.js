@@ -575,7 +575,7 @@ window.onload = function () {
     elements.shareResultButton.onclick = () => {
         const deckUrl = generateDeckLink(); // デッキリンク生成部分を関数化
         const date = `${state.pickleDate.slice(0, 4)}/${state.pickleDate.slice(4, 6)}/${state.pickleDate.slice(6, 8)}`;
-        const shareText = `#2Pickle ${date}\nクラス: ${state.currentClass}\n完成デッキはこちら！\nhttps://hakkasoru.github.io/.github.io/\n${deckUrl}`;
+        const shareText = `#2Pickle ${date}\nクラス: ${state.currentClass}\n完成デッキはこちら！\n2Pickleをプレイ: https://hakkasoru.github.io/.github.io/\n${deckUrl}`;
 
         navigator.clipboard.writeText(shareText).then(() => {
             addLog(">> 結果をクリップボードにコピーしました！");
@@ -684,6 +684,7 @@ window.onload = function () {
     initializeSimulator();
 
 };
+
 
 
 
