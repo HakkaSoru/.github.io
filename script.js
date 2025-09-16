@@ -266,6 +266,13 @@ window.onload = function () {
         elements.currentNeutralRate.textContent = gameSettings.userSettings.neutralCardRate;
         elements.currentWnew.textContent = gameSettings.userSettings.W_NEW;
 
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0'); // 月は0から始まるため+1
+        const dd = String(today.getDate()).padStart(2, '0');
+        const todayString = `${yyyy}-${mm}-${dd}`;
+        elements.pickleDateInput.max = todayString;
+
         renderClassSelection();
         updateDeckCardCountDisplay();
         elements.mode40Button.style.backgroundColor = '#2563eb';
@@ -347,8 +354,15 @@ window.onload = function () {
 
     elements.startPickleButton.onclick = () => {
         const selectedDate = elements.pickleDateInput.value ? new Date(elements.pickleDateInput.value) : new Date();
-        startPickleMode(selectedDate);
-    };
+        selectedDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+    
+        if (selectedDate > today) {
+            addLog(">> 未来の日付は選択できません。");
+            return; // 未来日が選択された場合は処理を中断
+        }
+            startPickleMode(selectedDate);
+        };
 
     elements.rerollButton.onclick = () => {
         if (state.rerollCount <= 0) {
@@ -684,6 +698,7 @@ window.onload = function () {
     initializeSimulator();
 
 };
+
 
 
 
