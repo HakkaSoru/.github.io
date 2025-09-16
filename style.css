@@ -147,26 +147,44 @@ h3 {
     background-color: #fff;
     border-radius: 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    align-self: center;
+    margin-top: 2rem;
 }
 
 .deck-list {
     margin-top: 1rem;
-    max-height: 300px;
+    max-height: 400px;
     overflow-y: auto;
     border: 1px solid #e5e7eb;
     border-radius: 0.5rem;
     padding: 1rem;
 }
 
-.deck-list li {
+.deck-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 0.5rem 0;
     border-bottom: 1px solid #e5e7eb;
     font-size: 0.95rem;
 }
 
-.deck-list li:last-child {
+.deck-list-item:last-child {
     border-bottom: none;
 }
+
+.deck-list-cost {
+    display: inline-block;
+    width: 2em;
+    font-weight: bold;
+    text-align: center;
+}
+
+.rarity-bronze { color: #cd7f32; }
+.rarity-silver { color: #c0c0c0; }
+.rarity-gold { color: #ffd700; }
+.rarity-legend { color: #e567a4; }
+
 
 #log {
     margin-top: 2rem;
@@ -189,10 +207,44 @@ h3 {
     border-bottom: none;
 }
 
-.completed-message {
-    text-align: center;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #10b981;
-    margin-top: 2rem;
+/* ▼▼▼ ここから追加 ▼▼▼ */
+#settings-container {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
 }
+
+#settings-container h4 {
+    margin: 0 0 0.5rem 0;
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.setting-item label {
+    font-weight: 600;
+}
+
+.setting-item input {
+    width: 80px;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+    border: 1px solid #d1d5db;
+}
+
+.setting-item span {
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+/* ▲▲▲ ここまで追加 ▲▲▲ */
