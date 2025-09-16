@@ -207,7 +207,6 @@ h3 {
     border-bottom: none;
 }
 
-/* ▼▼▼ ここから追加 ▼▼▼ */
 #settings-container {
     padding: 1rem;
     border: 1px solid #e5e7eb;
@@ -247,4 +246,30 @@ h3 {
     font-size: 0.875rem;
     color: #4b5563;
 }
-/* ▲▲▲ ここまで追加 ▲▲▲ */
+
+#readme-container {
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 960px;
+    align-self: center;
+    box-sizing: border-box;
+}
+
+#readme-container h2 {
+    margin-top: 0;
+}
+
+#readme-container h3 {
+    margin-top: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding-bottom: 0.5rem;
+}
+
+#readme-container p, #readme-container ul {
+    text-align: left;
+    line-height: 1.6;
+}
+
+#readme-container ul {
+    padding-left: 1.5rem;
+}
