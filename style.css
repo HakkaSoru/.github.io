@@ -304,3 +304,47 @@ h3 {
 #page-footer p {
     margin: 0.5rem 0; /* 段落ごとの上下の余白 */
 }
+
+#game-mode-container {
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+#pickle-mode-container, #normal-mode-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#pickle-mode-container h3, #normal-mode-container h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.pickle-date-select {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+#mode-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#mode-selection p {
+    margin: 0.5rem 0 0 0;
+    font-weight: 600;
+}
+
+#settings-container {
+    /* (既存のスタイル) */
+}
