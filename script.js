@@ -460,7 +460,7 @@ window.onload = function () {
             const sortedIds = sortDeckForQrCode(state.deck);
             const hashes = sortedIds.map(id => convertIdToHash(parseInt(id, 10)));
             const hashString = hashes.join('.');
-            deckUrl = `https://shadowverse-wb.com/web/Deck/share?hash=2.${classNumber}.${hashString}`;
+            deckUrl = `https://shadowverse-wb.com/web/Deck/share?hash=2.${classNumber}.${hashString}&lang=ja`;
 
             elements.qrCodeDisplay.style.display = 'block';
             elements.qrCodeDisplay.innerHTML = '';
@@ -482,7 +482,7 @@ window.onload = function () {
             const initialHashes = state.guaranteedCards.map(card => convertIdToHash(parseInt(card.id, 10))).join('.');
 
             // ▼▼▼ この行を修正しました ▼▼▼
-            deckUrl = `https://shadowverse-wb.com/web/Deck/share?hash=6.${classNumber}.${mainHashes}|${initialHashes}`;
+            deckUrl = `https://shadowverse-wb.com/web/Deck/share?hash=6.${classNumber}.${mainHashes}|${initialHashes}&lang=ja`;
 
             elements.qrCodeDisplay.style.display = 'none';
             addLog(`>> デッキリンクを生成しました。`);
@@ -541,3 +541,4 @@ window.onload = function () {
     initializeSimulator();
 
 };
+
