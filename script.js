@@ -526,7 +526,7 @@ window.onload = function () {
         if (!isNaN(newNeutralRate) && newNeutralRate >= 0 && newNeutralRate <= 1) {
             gameSettings.userSettings.neutralCardRate = newNeutralRate;
         }
-        if (!isNaN(newWNew) && newWNew >= 1) {
+        if (!isNaN(newWNew) && newWNew >= 0 && newNeutralRate <= 10) {
             gameSettings.userSettings.W_NEW = newWNew;
         }
 
@@ -543,3 +543,4 @@ window.onload = function () {
     // --- 初期化処理 ---
     initializeSimulator();
 };
+
