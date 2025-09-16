@@ -9,7 +9,7 @@ const gameSettings = {
         rerollCounts: {
             "エルフ": 3,
             "ロイヤル": 3,
-            "ウィッチ": 7, // 例としてウィッチだけ変更
+            "ウィッチ": 7,
             "ドラゴン": 3,
             "ナイトメア": 3,
             "ビショップ": 3,
@@ -23,13 +23,15 @@ const gameSettings = {
         rerollCounts: {
             "エルフ": 2,
             "ロイヤル": 2,
-            "ウィッチ": 5, // 例としてウィッチだけ変更
+            "ウィッチ": 5,
             "ドラゴン": 2,
             "ナイトメア": 2,
             "ビショップ": 2,
             "ネメシス": 2
         }
-    }
+    },
+    // ニュートラルカードの提示率
+    neutralCardRate: 0.15
 };
 
 window.onload = function () {
@@ -41,14 +43,16 @@ window.onload = function () {
     }
 
     const state = {
-        currentMode: 'mode40', // ★ 追加: 現在のモードを管理
+        currentMode: 'mode40',
         currentClass: null,
         deck: {},
         pickCount: 0,
         rerollCount: 0,
         cardsInDeckCount: 0,
-        pickProbability: [],
-        rerollProbability: {}
+        classProbabilities: {
+            pick: {},
+            reroll: {}
+        }
     };
 
     const elements = {
@@ -63,7 +67,6 @@ window.onload = function () {
         log: document.getElementById('log'),
         statusMessage: document.getElementById('status-message'),
         deckCardCount: document.getElementById('deck-card-count'),
-        // ★ 追加: 新しいUI要素
         mode40Button: document.getElementById('mode-40-button'),
         mode30Button: document.getElementById('mode-30-button'),
         currentModeDisplay: document.getElementById('current-mode-display'),
@@ -84,15 +87,7 @@ window.onload = function () {
         state.cardsInDeckCount = 0;
         state.deck = {};
 
-        // 通常ピック用の確率テーブルを生成
-        generatePickProbabilityTable(className);
-
-        // ★ 追加: 再抽選用の確率テーブルを生成
-        calculateRerollProbabilities(className);
-
-        // デバッグ用に、再抽選の確率をコンソールに出力
-        console.log(`--- ${className} の再抽選グループ確率 ---`);
-        console.log(state.rerollProbability);
+        generateProbabilityTables(className);
 
         const currentModeSettings = gameSettings[state.currentMode];
         state.rerollCount = currentModeSettings.rerollCounts[className];
@@ -112,7 +107,6 @@ window.onload = function () {
         pickNext();
     }
 
-    // ★ 修正: モード切替に対応
     function pickNext() {
         const currentModeSettings = gameSettings[state.currentMode];
         if (state.pickCount >= currentModeSettings.pickCount) {
@@ -128,31 +122,31 @@ window.onload = function () {
     }
 
     function getChoicesForPick(pickIndex) {
-        const pickInfo = state.pickProbability[pickIndex];
+        const pickInfo = state.classProbabilities.pick[pickIndex];
         const uniqueCards = [];
-        let attempts = 0; // 無限ループ防止用のカウンター
+        let attempts = 0;
 
-        // まず、ユニークなカードを4枚集めることを試みる
         while (uniqueCards.length < 4 && attempts < 100) {
             const group = weightedRandom(pickInfo.groups);
-            // まずカードを1枚取得してみる
-            const potentialCard = getRandomCard(pickInfo.rarity, group, []);
+            const potentialCard = getRandomCard({
+                rarity: pickInfo.rarity,
+                group: group,
+                exclude: uniqueCards
+            });
 
             if (potentialCard) {
-                // それが既に候補リストになければ追加する
-                const isDuplicate = uniqueCards.some(c => c.name === potentialCard.name);
-                if (!isDuplicate) {
-                    uniqueCards.push(potentialCard);
-                }
+                uniqueCards.push(potentialCard);
             }
             attempts++;
         }
 
-        // もしユニークなカードが4枚集まらなかった場合 (カードプールが枯渇した)
-        // 残りのスロットを、重複を許可して埋める
+        // カードプールが枯渇した場合のフォールバック
         while (uniqueCards.length < 4) {
             const group = weightedRandom(pickInfo.groups);
-            const fillCard = getRandomCard(pickInfo.rarity, group, []);
+            const fillCard = getRandomCard({
+                rarity: pickInfo.rarity,
+                group: group,
+            });
             uniqueCards.push(fillCard || { name: "（候補なし）", id: "", cost: 0 });
         }
 
@@ -162,29 +156,35 @@ window.onload = function () {
         ];
     }
 
-    // ★ 修正: 3枚制限を実装済みのものを採用
-    function getRandomCard(rarity, group, excludeCards = []) {
+    // ★ カード取得関数
+    function getRandomCard(filters) {
         const cardPool = cardData[state.currentClass].cards.filter(c => {
+            // 3枚制限
             if (state.currentMode === 'mode40' && state.deck[c.name] && state.deck[c.name].count >= 3) {
                 return false;
             }
-            let rarityMatch = false;
-            if (rarity === "ゴールド/レジェンド") {
-                rarityMatch = c.rarity === "ゴールド" || c.rarity === "レジェンド";
-            } else {
-                rarityMatch = c.rarity === rarity;
+            // レアリティ
+            if (filters.rarity) {
+                if (filters.rarity === "ゴールド/レジェンド") {
+                    if (c.rarity !== "ゴールド" && c.rarity !== "レジェンド") return false;
+                } else {
+                    if (c.rarity !== filters.rarity) return false;
+                }
             }
-            const groupMatch = c.group === group;
-            const exclusionMatch = !excludeCards.some(ec => ec && ec.name === c.name);
-            const isClassCard = cardData[state.currentClass].classCards.some(cc => cc.name === c.name);
-            const isNeutralCard = neutralCards.some(nc => nc.name === c.name);
-            return rarityMatch && groupMatch && exclusionMatch && (isClassCard || isNeutralCard);
+            // グループ
+            if (filters.group && c.group !== filters.group) {
+                return false;
+            }
+            // 除外リスト
+            if (filters.exclude && filters.exclude.some(ec => ec && ec.name === c.name)) {
+                return false;
+            }
+            return true;
         });
+
         if (cardPool.length === 0) return null;
         return cardPool[Math.floor(Math.random() * cardPool.length)];
     }
-
-    // --- ここから下の関数は、ほぼ変更なし、または以前の修正を統合 ---
 
 
     /**
@@ -194,21 +194,19 @@ window.onload = function () {
         const counts = { normal: 0, new: 0, normal_n: 0, new_n: 0 };
         const isGoldLegend = rarity === "ゴールド/レジェンド";
 
-        // クラスカードを数える
-        cardData[className].classCards.forEach(card => {
-            const rarityMatch = isGoldLegend ? (card.rarity === "ゴールド" || card.rarity === "レジェンド") : (card.rarity === rarity);
+        const cardSource = rarity ? cardData[className].cards : cardData[className].classCards;
+
+        cardSource.forEach(card => {
+            let rarityMatch = !rarity; // レアリティ指定がなければ常にtrue
+            if (rarity) {
+                rarityMatch = isGoldLegend ? (card.rarity === "ゴールド" || card.rarity === "レジェンド") : (card.rarity === rarity);
+            }
+
             if (rarityMatch) {
                 if (card.group === 'new') counts.new++;
-                if (card.group === 'normal') counts.normal++;
-            }
-        });
-
-        // ニュートラルカードを数える
-        neutralCards.forEach(card => {
-            const rarityMatch = isGoldLegend ? (card.rarity === "ゴールド" || card.rarity === "レジェンド") : (card.rarity === rarity);
-            if (rarityMatch) {
-                if (card.group === 'new-n') counts.new_n++;
-                if (card.group === 'normal-n') counts.normal_n++;
+                else if (card.group === 'normal') counts.normal++;
+                else if (card.group === 'new-n') counts.new_n++;
+                else if (card.group === 'normal-n') counts.normal_n++;
             }
         });
         return counts;
@@ -219,108 +217,46 @@ window.onload = function () {
      */
     function calculateProbabilities(counts, targetNeutralRate = 0.15) {
         const probs = { normal: 0, new: 0, "normal-n": 0, "new-n": 0 };
-
-        const W_NEW = 1.2; // "new"カードの重み
-
-        // クラスカードの合計重みを計算
+        const W_NEW = 1.2;
         const totalClassWeight = counts.normal + (counts.new * W_NEW);
-        // ニュートラルカードの合計重みを計算
         const totalNeutralWeight = counts.normal_n + (counts.new_n * W_NEW);
-
         const targetClassRate = 1 - targetNeutralRate;
 
-        // 各グループの確率を計算
         if (totalClassWeight > 0) {
             probs.normal = targetClassRate * counts.normal / totalClassWeight;
             probs.new = targetClassRate * (counts.new * W_NEW) / totalClassWeight;
         }
-
         if (totalNeutralWeight > 0) {
             probs['normal-n'] = targetNeutralRate * counts.normal_n / totalNeutralWeight;
             probs['new-n'] = targetNeutralRate * (counts.new_n * W_NEW) / totalNeutralWeight;
         }
-
         return probs;
     }
 
-    /**
-     * 19回分のピック確率テーブルを生成し、stateに保存する
-     */
-function generatePickProbabilityTable(className) {
-                const originalPickRarities = [
-                    "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ", 
-                    "シルバー", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ",
-                    "ゴールド/レジェンド", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ゴールド/レジェンド"
-                ];
-
-                // ★★★ ここからが追加箇所 ★★★
-                // デバッグ用に、各レアリティのカード枚数カウント結果をコンソールに出力
-                console.log(`--- ${className} のカード枚数カウント結果 ---`);
-                const countsTable = originalPickRarities.map(rarity => {
-                    const counts = getCardCountsByGroup(className, rarity);
-                    return {
-                        Rarity: rarity,
-                        ...counts
-                    };
-                });
-                console.table(countsTable);
-                // ★★★ ここまで ★★★
-
-                state.pickProbability = originalPickRarities.map(rarity => {
-                    const counts = getCardCountsByGroup(className, rarity);
-                    const groups = calculateProbabilities(counts, gameSettings.neutralCardRate);
-                    return { rarity, groups };
-                });
-            }
-
-    /**
-    * クラス全体のカードプールから、再抽選用のグループ提示確率を計算し、stateに保存する
-    */
-    function calculateRerollProbabilities(className) {
-        const totalCounts = { normal: 0, new: 0, normal_n: 0, new_n: 0 };
-
-        // クラスの全カード（ニュートラル含む）をループして枚数を数える
-        cardData[className].cards.forEach(card => {
-            if (card.group === 'new') totalCounts.new++;
-            else if (card.group === 'normal') totalCounts.normal++;
-            else if (card.group === 'new-n') totalCounts.new_n++;
-            else if (card.group === 'normal-n') totalCounts.normal_n++;
+    // ピック用と再抽選用の確率テーブルをまとめて生成
+    function generateProbabilityTables(className) {
+        // --- ピック用の確率テーブル生成 ---
+        const pickRarities = [
+            "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ", "ゴールド", "ブロンズ",
+            "シルバー", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ブロンズ",
+            "ゴールド/レジェンド", "ブロンズ", "シルバー", "ブロンズ", "シルバー", "ゴールド/レジェンド"
+        ];
+        state.classProbabilities.pick = pickRarities.map(rarity => {
+            const counts = getCardCountsByGroup(className, rarity);
+            const groups = calculateProbabilities(counts, gameSettings.neutralCardRate);
+            return { rarity, groups };
         });
 
-        // 既存の確率計算ロジックを再利用して、stateに保存
-        state.rerollProbability = calculateProbabilities(totalCounts);
-    }
+        // --- 再抽選用の確率テーブル生成 ---
+        const rerollCounts = getCardCountsByGroup(className, null); // 全てのレアリティを対象
+        state.classProbabilities.reroll = calculateProbabilities(rerollCounts, gameSettings.neutralCardRate);
 
-    /**
-     * 指定されたグループに属するカードを、レアリティを問わずランダムに1枚返す
-     */
-    function getRandomCardFromGroup(group, excludeCards = []) {
-        const cardPool = cardData[state.currentClass].cards.filter(c => {
-            // グループが一致するか
-            if (c.group !== group) return false;
-
-            // 3枚制限のチェック (40枚モードのみ)
-            if (state.currentMode === 'mode40' && state.deck[c.name] && state.deck[c.name].count >= 3) {
-                return false;
-            }
-
-            // この再抽選内での重複チェック
-            const isExcluded = excludeCards.some(ec => ec && ec.name === c.name);
-            if (isExcluded) return false;
-
-            return true;
-        });
-
-        if (cardPool.length === 0) {
-            return null;
-        }
-        return cardPool[Math.floor(Math.random() * cardPool.length)];
     }
 
     function initializeSimulator() {
         renderClassSelection();
         updateDeckCardCountDisplay();
-        elements.mode40Button.style.backgroundColor = '#2563eb'; // 初期選択モードを強調
+        elements.mode40Button.style.backgroundColor = '#2563eb';
     }
 
     function getGuaranteedCards(className) {
@@ -360,11 +296,7 @@ function generatePickProbabilityTable(className) {
             pair.forEach(card => {
                 const cardDiv = document.createElement('div');
                 cardDiv.classList.add('card-pair');
-                if (card) {
-                    cardDiv.innerHTML = `<p class="card-name">${card.name}</p>`;
-                } else {
-                    cardDiv.innerHTML = `<p class="card-name">カードなし</p>`;
-                }
+                cardDiv.innerHTML = `<p class="card-name">${card ? card.name : 'カードなし'}</p>`;
                 cardGroupDiv.appendChild(cardDiv);
             });
             elements.cardChoicesContainer.appendChild(cardGroupDiv);
@@ -388,61 +320,53 @@ function generatePickProbabilityTable(className) {
     }
 
     elements.rerollButton.onclick = () => {
-        if (state.rerollCount > 0) {
-            state.rerollCount--;
-            elements.rerollCount.textContent = state.rerollCount;
-            addLog(`>> 再抽選を実行しました。残り${state.rerollCount}回。`);
-
-            const rerollChoices = [];
-            const pickedCardsForReroll = [];
-
-            // 4枚のユニークなカードを再抽選で選ぶ
-            for (let i = 0; i < 4; i++) {
-                let selectedCard = null;
-                let attempts = 0;
-                // ユニークなカードが見つかるまで試行
-                while (!selectedCard && attempts < 100) {
-                    // 1. 全レアリティ対象の確率テーブルからグループを決定
-                    const group = weightedRandom(state.rerollProbability);
-
-                    // 2. そのグループに属するカードをヘルパー関数で取得
-                    const potentialCard = getRandomCardFromGroup(group, pickedCardsForReroll);
-
-                    if (potentialCard) {
-                        selectedCard = potentialCard;
-                    }
-                    attempts++;
-                }
-                // 最終的に選ばれたカードを候補に追加
-                pickedCardsForReroll.push(selectedCard || { name: "（候補なし）", id: "", cost: 0 });
-            }
-
-            // 新しい選択肢を画面に表示
-            renderChoices([
-                [pickedCardsForReroll[0], pickedCardsForReroll[1]],
-                [pickedCardsForReroll[2], pickedCardsForReroll[3]]
-            ]);
-
-        } else {
+        if (state.rerollCount <= 0) {
             addLog(`>> 再抽選回数がありません。`);
+            return;
         }
+
+        state.rerollCount--;
+        elements.rerollCount.textContent = state.rerollCount;
+        addLog(`>> 再抽選を実行しました。残り${state.rerollCount}回。`);
+
+        const rerollChoices = [];
+        let attempts = 0;
+        while (rerollChoices.length < 4 && attempts < 100) {
+            const group = weightedRandom(state.classProbabilities.reroll);
+            const potentialCard = getRandomCard({
+                group: group,
+                exclude: rerollChoices
+            });
+            if (potentialCard) {
+                rerollChoices.push(potentialCard);
+            }
+            attempts++;
+        }
+
+        // 枯渇した場合のフォールバック
+        while (rerollChoices.length < 4) {
+            rerollChoices.push({ name: "（候補なし）", id: "", cost: 0 });
+        }
+
+        renderChoices([
+            [rerollChoices[0], rerollChoices[1]],
+            [rerollChoices[2], rerollChoices[3]]
+        ]);
     };
 
-    function updateDeckDisplay() {
-        elements.currentDeck.innerHTML = '';
-
-        const deckAsArray = Object.values(state.deck);
+    function sortDeck(deckObject) {
+        const deckAsArray = Object.values(deckObject);
+        const parseId = (id) => {
+            if (!id || id.length !== 8) return { packId: 999, classId: 9, rarityId: 9, typeId: 9, number: 99 };
+            return {
+                packId: parseInt(id.substring(0, 3)), classId: parseInt(id.substring(3, 4)),
+                rarityId: parseInt(id.substring(4, 5)), typeId: parseInt(id.substring(5, 6)),
+                number: parseInt(id.substring(6, 8))
+            };
+        };
 
         deckAsArray.sort((a, b) => {
             if (a.cost !== b.cost) return a.cost - b.cost;
-            const parseId = (id) => {
-                if (!id || id.length !== 8) return { classId: 9, typeId: 9, packId: 999, rarityId: 9, number: 99 };
-                return {
-                    packId: parseInt(id.substring(0, 3)), classId: parseInt(id.substring(3, 4)),
-                    rarityId: parseInt(id.substring(4, 5)), typeId: parseInt(id.substring(5, 6)),
-                    number: parseInt(id.substring(6, 8))
-                };
-            };
             const idA = parseId(a.id); const idB = parseId(b.id);
             if (idA.classId !== idB.classId) return idA.classId - idB.classId;
             if (idA.typeId !== idB.typeId) return idA.typeId - idB.typeId;
@@ -450,16 +374,19 @@ function generatePickProbabilityTable(className) {
             if (idA.rarityId !== idB.rarityId) return idA.rarityId - idB.rarityId;
             return idA.number - idB.number;
         });
+        return deckAsArray;
+    }
 
-        deckAsArray.forEach(card => {
+    function updateDeckDisplay() {
+        elements.currentDeck.innerHTML = '';
+        const sortedDeck = sortDeck(state.deck);
+
+        sortedDeck.forEach(card => {
             const li = document.createElement('li');
             li.classList.add('deck-list-item');
-
             const rarityClass = {
-                "ブロンズ": "rarity-bronze",
-                "シルバー": "rarity-silver",
-                "ゴールド": "rarity-gold",
-                "レジェンド": "rarity-legend"
+                "ブロンズ": "rarity-bronze", "シルバー": "rarity-silver",
+                "ゴールド": "rarity-gold", "レジェンド": "rarity-legend"
             }[card.rarity] || "";
 
             li.innerHTML = `
@@ -467,13 +394,12 @@ function generatePickProbabilityTable(className) {
                 <span class="deck-list-cost">${card.cost}</span>
                 <span class="${rarityClass}">${card.name}</span>
             </div>
-            <span>x${card.count}</span>
-        `;
+            <span>x${card.count}</span>`;
             elements.currentDeck.appendChild(li);
         });
 
         updateDeckCardCountDisplay();
-        renderManaCurveChart(); // マナカーブも更新
+        renderManaCurveChart();
     }
 
     function updateDeckCardCountDisplay() {
@@ -494,118 +420,51 @@ function generatePickProbabilityTable(className) {
     function weightedRandom(weights) {
         const totalWeight = Object.values(weights).reduce((sum, w) => sum + w, 0);
         let randomNum = Math.random() * totalWeight;
-
         for (const group in weights) {
             randomNum -= weights[group];
-            if (randomNum <= 0) {
-                return group;
-            }
+            if (randomNum <= 0) return group;
         }
         return Object.keys(weights)[0];
     }
 
     function convertIdToHash(id) {
         const ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_';
-        if (id === 0) {
-            return ALPHABET[0].repeat(4);
-        }
-
+        if (id === 0) return ALPHABET[0].repeat(4);
         let num = id;
         let hash = '';
-
         while (num > 0) {
-            const remainder = num % 64;
-            hash = ALPHABET[remainder] + hash;
+            hash = ALPHABET[num % 64] + hash;
             num = Math.floor(num / 64);
         }
-
-        // 4文字になるように先頭を0で埋める
-        while (hash.length < 4) {
-            hash = ALPHABET[0] + hash;
-        }
-
-        return hash;
+        return hash.padStart(4, ALPHABET[0]);
     }
 
     function sortDeckForQrCode(deck) {
         const sortedCards = [];
+        const sortedDeck = sortDeck(deck); // ソート処理を共通関数に任せる
 
-        // デッキオブジェクトをカードオブジェクトの配列に変換
-        for (const cardName in deck) {
-            const cardInfo = deck[cardName];
+        // 共通関数はユニークなカードリストを返すので、枚数分展開する
+        sortedDeck.forEach(cardInfo => {
             for (let i = 0; i < cardInfo.count; i++) {
                 sortedCards.push(cardInfo);
             }
-        }
-
-        // カードをルールに従ってソート
-        sortedCards.sort((a, b) => {
-            // 1. コストで比較
-            if (a.cost !== b.cost) {
-                return a.cost - b.cost;
-            }
-
-            // IDから各種情報をパース
-            const parseId = (id) => {
-                if (!id || id.length !== 8) return { classId: 9, typeId: 9, packId: 999, rarityId: 9, number: 99 };
-                return {
-                    packId: parseInt(id.substring(0, 3)),
-                    classId: parseInt(id.substring(3, 4)),
-                    rarityId: parseInt(id.substring(4, 5)),
-                    typeId: parseInt(id.substring(5, 6)),
-                    number: parseInt(id.substring(6, 8))
-                };
-            };
-
-            const idA = parseId(a.id);
-            const idB = parseId(b.id);
-
-            // 2. クラスで比較 (ニュートラル:0, エルフ:1, ...)
-            if (idA.classId !== idB.classId) {
-                return idA.classId - idB.classId;
-            }
-
-            // 3. カードの種類で比較 (フォロワー:1, アミュレット:2, スペル:3)
-            if (idA.typeId !== idB.typeId) {
-                return idA.typeId - idB.typeId;
-            }
-
-            // 4. カードパックで比較
-            if (idA.packId !== idB.packId) {
-                return idA.packId - idB.packId;
-            }
-
-            // 5. レアリティで比較
-            if (idA.rarityId !== idB.rarityId) {
-                return idA.rarityId - idB.rarityId;
-            }
-
-            // 6. カード番号で比較
-            return idA.number - idB.number;
         });
-
-        // ソートされたカードのID配列を返す
         return sortedCards.map(card => card.id);
     }
 
+
     function renderManaCurveChart() {
-        const manaCounts = {};
-        for (let i = 0; i <= 10; i++) {
-            manaCounts[i] = 0;
-        }
+        const manaCounts = Array(11).fill(0);
 
         for (const cardName in state.deck) {
             const card = state.deck[cardName];
-            if (card.cost >= 10) {
-                manaCounts[10] += card.count;
-            } else {
-                manaCounts[card.cost] = (manaCounts[card.cost] || 0) + card.count;
-            }
+            const cost = Math.min(card.cost, 10);
+            manaCounts[cost] += card.count;
         }
 
         const ctx = document.getElementById('mana-curve-chart').getContext('2d');
         const labels = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10+"];
-        const data = Object.values(manaCounts).slice(1);
+        const data = manaCounts.slice(1);
 
         if (manaCurveChart) {
             manaCurveChart.data.labels = labels;
@@ -623,9 +482,7 @@ function generatePickProbabilityTable(className) {
                     }]
                 },
                 options: {
-                    scales: {
-                        y: { beginAtZero: true, ticks: { stepSize: 1 } }
-                    },
+                    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
                     plugins: { legend: { display: false } }
                 }
             });
@@ -633,18 +490,13 @@ function generatePickProbabilityTable(className) {
     }
 
     elements.generateQrButton.onclick = () => {
-        // ★★★ ここからが追加・修正箇所 ★★★
-        // 最初に、30枚モードではないかチェック
         if (state.currentMode === 'mode30') {
             addLog(">> 30枚モードではQRコードを生成できません。");
-            return; // 30枚モードの場合は、ここで処理を終了
+            return;
         }
-        // ★★★ ここまで ★★★
-
-        // --- 以下は40枚モードの時だけ実行される ---
         const currentModeSettings = gameSettings[state.currentMode];
         if (state.cardsInDeckCount !== currentModeSettings.targetDeckSize) {
-            addLog(`>> デッキが${currentModeSettings.targetDeckSize}枚ではありません。QRコードを生成できません。`);
+            addLog(`>> デッキが40枚未満のため、有効なQRコードを生成できません。`);
             return;
         }
 
@@ -672,9 +524,6 @@ function generatePickProbabilityTable(className) {
         elements.log.prepend(logP);
     };
 
-    // ★★★ ここから、新機能のイベントハンドラ ★★★
-
-    // モード切替ボタンの処理
     elements.mode40Button.onclick = () => {
         state.currentMode = 'mode40';
         elements.currentModeDisplay.textContent = '40枚';
@@ -691,7 +540,6 @@ function generatePickProbabilityTable(className) {
         addLog(">> 30枚モードに切り替えました。");
     };
 
-    // 提示カード更新ボタンの処理
     elements.refreshClassesButton.onclick = () => {
         renderClassSelection();
         addLog(">> 提示カードを更新しました。");
@@ -700,8 +548,3 @@ function generatePickProbabilityTable(className) {
     // --- 初期化処理 ---
     initializeSimulator();
 };
-
-
-
-
-
