@@ -585,23 +585,39 @@ window.onload = function () {
     };
 
     function generateDeckLink() {
-        // (...generateQrButton.onclick内のURL生成ロジックをここに移動...)
-        // この関数はURL文字列だけを返すようにする
         let deckUrl = '';
         const classMap = { "エルフ": 1, "ロイヤル": 2, "ウィッチ": 3, "ドラゴン": 4, "ナイトメア": 5, "ビショップ": 6, "ネメシス": 7 };
         const classNumber = classMap[state.currentClass] || 0;
-
+    
         if (state.currentMode === 'mode40') {
             if (state.cardsInDeckCount !== gameSettings.mode40.targetDeckSize) {
-                addLog(`>> デッキが40枚ではありません。QRコードを生成できません。`);
-                return;
+                addLog(`>> デッキが40枚ではありません。リンクを生成できません。`);
+                return null; // 失敗時はnullを返す
             }
-
             const sortedIds = sortDeckForQrCode(state.deck);
             const hashes = sortedIds.map(id => convertIdToHash(parseInt(id, 10)));
             const hashString = hashes.join('.');
             deckUrl = `https://shadowverse-wb.com/ja/deck/detail/?hash=2.${classNumber}.${hashString}`;
+    
+        } else if (state.currentMode === 'mode30') {
+            if (state.cardsInDeckCount !== gameSettings.mode30.targetDeckSize) {
+                addLog(`>> デッキが30枚ではありません。リンクを生成できません。`);
+                return null; // 失敗時はnullを返す
+            }
+            const deckIds = sortDeckForQrCode(state.deck);
+            const mainHashes = deckIds.map(id => convertIdToHash(parseInt(id, 10))).join('.');
+            const initialHashes = state.guaranteedCards.map(card => convertIdToHash(parseInt(card.id, 10))).join('.');
+            deckUrl = `https://shadowverse-wb.com/ja/deck/detail/?hash=6.${classNumber}.${mainHashes}|${initialHashes}`;
+        }
+        return deckUrl;
+    }
 
+    elements.generateQrButton.onclick = () => {
+        const deckUrl = generateDeckLink();
+        if (!deckUrl) return; // URLが生成されなかった場合はここで処理を終了
+    
+        // モードに応じてQRコード表示を制御
+        if (state.currentMode === 'mode40') {
             elements.qrCodeDisplay.style.display = 'block';
             elements.qrCodeDisplay.innerHTML = '';
             if (qrcode) {
@@ -610,29 +626,20 @@ window.onload = function () {
                 qrcode = new QRCode(elements.qrCodeDisplay, { text: deckUrl, width: 128, height: 128, correctLevel: QRCode.CorrectLevel.L });
             }
             addLog(`>> QRコードを生成しました。`);
-
-        } else if (state.currentMode === 'mode30') {
-             const deckIds = sortDeckForQrCode(state.deck);
-             const mainHashes = deckIds.map(id => convertIdToHash(parseInt(id, 10))).join('.');
-             const initialHashes = state.guaranteedCards.map(card => convertIdToHash(parseInt(card.id, 10))).join('.');
-             deckUrl = `https://shadowverse-wb.com/ja/deck/detail/?hash=6.${classNumber}.${mainHashes}|${initialHashes}`;
+        } else {
+            elements.qrCodeDisplay.style.display = 'none';
+            addLog(`>> デッキリンクを生成しました。`);
         }
-        return deckUrl;
-    }
-
-    elements.generateQrButton.onclick = () => {
-        const deckUrl = generateDeckLink();
-        if (!deckUrl) return;
-
-        if (state.currentMode === 'mode40') {
-             // (QRコード表示の処理)
-        }
-        
+    
         // 共通のログ出力処理
         const logP = document.createElement('p');
         const logA = document.createElement('a');
         logA.href = deckUrl;
-        // (...残りのログ出力処理)
+        logA.textContent = deckUrl;
+        logA.target = "_blank";
+        logA.rel = "noopener noreferrer";
+        logP.appendChild(logA);
+        elements.log.prepend(logP);
     };
     
     elements.mode40Button.onclick = () => {
@@ -677,3 +684,4 @@ window.onload = function () {
     initializeSimulator();
 
 };
+
