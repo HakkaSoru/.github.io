@@ -278,4 +278,13 @@ h3 {
 #readme-container ul {
     padding-left: 1.5rem;
 }
+#readme-container p {
+    margin-top: 0;
+    margin-bottom: 0;
+    line-height: 1.6; /* 行自体の高さをリストと合わせる */
+}
+
+#readme-container h3 + p {
+    margin-top: 1rem; /* 見出しの直後の段落だけ少しスペースを空ける */
+}
 
