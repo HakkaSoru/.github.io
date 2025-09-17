@@ -8,92 +8,92 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
     <div class="container">
-        <div class="main-content">
+        <main class="main-content">
             <h1>2Pick シミュレーター</h1>
             <div id="status-message"></div>
 
-            <div id="game-mode-container">
-                <div id="pickle-mode-container">
+            <section id="game-mode-container">
+                <section id="pickle-mode-container">
                     <h3>今日の2Pickle</h3>
                     <button id="start-pickle-button" class="button">挑戦する</button>
                     <div class="pickle-date-select">
                         <label for="pickle-date">別の日付で挑戦:</label>
-                        <input type="date" id="pickle-date">
+                        <input type="date" id="pickle-date" />
                     </div>
-                </div>
-                <div id="normal-mode-container">
+                </section>
+                <section id="normal-mode-container">
                     <h3>フリーモード</h3>
                     <div id="mode-selection">
                         <button id="mode-40-button" class="button">40枚モード</button>
                         <button id="mode-30-button" class="button">30枚モード</button>
                         <p>現在のモード: <span id="current-mode-display">40枚</span></p>
                     </div>
-                </div>
-            </div>
+                </section>
+            </section>
 
-            <div id="settings-container">
+            <section id="settings-container">
                 <h4>詳細設定 (フリーモード専用)</h4>
                 <div class="setting-item">
                     <label for="neutral-rate-input">Nカード出現率:</label>
-                    <input type="number" id="neutral-rate-input" step="0.01" min="0" max="1" placeholder="規定値: 0.15">
+                    <input type="number" id="neutral-rate-input" step="0.01" min="0" max="1" placeholder="規定値: 0.15" />
                     <span>(現在: <span id="current-neutral-rate">0.15</span>)</span>
                 </div>
                 <div class="setting-item">
-                    <label for="wnew-input">新段カード補正:</label>
-                    <input type="number" id="wnew-input" step="0.1" min="0" max="10" placeholder="規定値: 1.2">
+                    <label for="wnew-input">新弾カード補正:</label>
+                    <input type="number" id="wnew-input" step="0.1" min="0" max="10" placeholder="規定値: 1.2" />
                     <span>(現在: <span id="current-wnew">1.2</span>)</span>
                 </div>
                 <button id="apply-settings-button" class="button">設定を反映</button>
-            </div>
+            </section>
+
             <button id="refresh-classes-button" class="button">提示カード更新</button>
-            <div id="class-selection">
+
+            <section id="class-selection">
                 <h2>クラス選択</h2>
                 <div class="class-buttons" id="class-buttons"></div>
-            </div>
+            </section>
 
-            <div id="pick-phase" style="display: none;">
+            <section id="pick-phase" style="display: none;">
                 <h2>ピック段階 <span id="pick-count"></span></h2>
                 <p>デッキ枚数：<span id="deck-card-count">0</span>枚</p>
                 <div class="card-choices-container" id="card-choices-container"></div>
                 <button id="reroll-button" class="button">再抽選 (残り <span id="reroll-count"></span>回)</button>
-            </div>
+            </section>
 
             <button id="share-result-button" class="button" style="display: none; background-color: #10b981;">結果をシェア(クリップボードにコピー)</button>
 
-            <div class="deck-list-container">
+            <section class="deck-list-container">
                 <h3>デッキリスト</h3>
                 <canvas id="mana-curve-chart" width="350" height="150"></canvas>
                 <ul id="current-deck" class="deck-list"></ul>
-            </div>
+            </section>
 
-            <div id="qrcode-container" style="text-align: center; margin-top: 2rem;">
+            <section id="qrcode-container" style="text-align: center; margin-top: 2rem;">
                 <button id="generate-qr-button" class="button">デッキリンク/QR生成</button>
                 <div id="qrcode-display" style="margin-top: 1rem; display: none;"></div>
-            </div>
+            </section>
 
-            <div id="log">
+            <section id="log">
                 <h3>ログ</h3>
-            </div>
+            </section>
 
-            <div id="readme-container">
-                </div>
-        </div>
+            <section id="readme-container"></section>
+        </main>
         <footer id="page-footer">
             <p>当サイトは「Shadowverse」の非公式ファンサイトです。</p>
             <p>ゲーム内で表示されるカードの画像、テキスト、その他の知的財産権は、すべて株式会社Cygamesに帰属します。</p>
         </footer>
     </div>
 
+    <!-- JSライブラリ・スクリプト -->
     <script src="seedrandom.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <script src="card-data.js"></script>
     <script src="script.js"></script>
-
 </body>
 
 </html>
