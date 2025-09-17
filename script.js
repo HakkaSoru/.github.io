@@ -354,6 +354,9 @@ window.onload = function () {
 
     elements.startPickleButton.onclick = () => {
         const selectedDate = elements.pickleDateInput.value ? new Date(elements.pickleDateInput.value) : new Date();
+        
+        const today = new Date();
+        
         selectedDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
     
