@@ -112,10 +112,11 @@ window.onload = function () {
     let manaCurveChart = null;
 
     function selectClass(className, guaranteedCards) {
+        // ピック開始時に必ずモード選択UIを消す
+        elements.gameModeContainer.style.display = 'none';
         state.currentClass = className;
         state.cardsInDeckCount = 0;
         state.deck = {};
-        // ▼▼▼ 追加 ▼▼▼
         state.guaranteedCards = guaranteedCards; // 初期カードをstateに保存
 
         generateProbabilityTables(className);
