@@ -13,7 +13,7 @@ const neutralCards = [
     createCard("10304120", "干絶の顕現ギルネリーゼ", 3, RARITY.LEGEND, GROUP.NEW_N),
     createCard("10303110", "勇気に満ちし者", 3, RARITY.GOLD, GROUP.NEW_N),
     createCard("10303210", "試練の石板", 3, RARITY.GOLD, GROUP.NEW_N),
-    createCard("10304110", "絶大の顕現マゼルベイン", 4, RARITY.LEGEND, GROUP.NEW_N),
+    // createCard("10304110", "絶大の顕現マゼルベイン", 4, RARITY.LEGEND, GROUP.NEW_N), // 禁止カード
 
     createCard("10001210", "探偵のルーペ", 3, RARITY.BRONZE, GROUP.NORMAL_N),
     createCard("10001110", "不屈のファイター", 2, RARITY.BRONZE, GROUP.NORMAL_N),

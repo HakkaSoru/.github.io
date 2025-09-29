@@ -5,12 +5,12 @@ const gameSettings = {
     mode40: {
         pickCount: 19,
         targetDeckSize: 40,
-        rerollCounts: { "エルフ": 3, "ロイヤル": 3, "ウィッチ": 7, "ドラゴン": 3, "ナイトメア": 3, "ビショップ": 3, "ネメシス": 3 }
+        rerollCounts: { "エルフ": 3, "ロイヤル": 3, "ウィッチ": 7, "ドラゴン": 3, "ナイトメア": 3, "ビショップ": 7, "ネメシス": 3 }
     },
     mode30: {
         pickCount: 14,
         targetDeckSize: 30,
-        rerollCounts: { "エルフ": 2, "ロイヤル": 2, "ウィッチ": 5, "ドラゴン": 2, "ナイトメア": 2, "ビショップ": 2, "ネメシス": 2 }
+        rerollCounts: { "エルフ": 2, "ロイヤル": 2, "ウィッチ": 5, "ドラゴン": 2, "ナイトメア": 2, "ビショップ": 5, "ネメシス": 2 }
     },
     userSettings: {
         neutralCardRate: 0.15,
