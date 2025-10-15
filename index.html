@@ -25,7 +25,7 @@
                     </div>
                 </section>
                 <section id="normal-mode-container">
-                    <h3>フリーモード</h3>
+                    <!-- <h3>フリーモード</h3> -->
                     <div id="mode-selection">
                         <button id="mode-40-button" class="button">40枚モード</button>
                         <button id="mode-30-button" class="button">30枚モード</button>
@@ -34,8 +34,15 @@
                 </section>
             </section>
 
+            <button id="refresh-classes-button" class="button">提示カード更新</button>
+
+            <section id="class-selection">
+                <h2>クラス選択</h2>
+                <div class="class-buttons" id="class-buttons"></div>
+            </section>
+
             <section id="settings-container">
-                <h4>詳細設定 (フリーモード専用)</h4>
+                <h4>詳細設定</h4>
                 <div class="setting-item">
                     <label for="neutral-rate-input">Nカード出現率:</label>
                     <input type="number" id="neutral-rate-input" step="0.01" min="0" max="1" placeholder="規定値: 0.15" />
@@ -47,13 +54,6 @@
                     <span>(現在: <span id="current-wnew">1.2</span>)</span>
                 </div>
                 <button id="apply-settings-button" class="button">設定を反映</button>
-            </section>
-
-            <button id="refresh-classes-button" class="button">提示カード更新</button>
-
-            <section id="class-selection">
-                <h2>クラス選択</h2>
-                <div class="class-buttons" id="class-buttons"></div>
             </section>
 
             <section id="pick-phase" style="display: none;">

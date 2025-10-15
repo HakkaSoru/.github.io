@@ -1,16 +1,19 @@
 // script.js
 
+// 機能フラグ --- 画面上から2Pickleを無効化する（コードは残す）
+const ENABLE_PICKLE = false;
+
 // ゲームのルールに関する設定をここにまとめる
 const gameSettings = {
     mode40: {
         pickCount: 19,
         targetDeckSize: 40,
-        rerollCounts: { "エルフ": 3, "ロイヤル": 3, "ウィッチ": 7, "ドラゴン": 3, "ナイトメア": 3, "ビショップ": 7, "ネメシス": 3 }
+        rerollCounts: { "エルフ": 6, "ロイヤル": 3, "ウィッチ": 8, "ドラゴン": 3, "ナイトメア": 3, "ビショップ": 6, "ネメシス": 3 }
     },
     mode30: {
         pickCount: 14,
         targetDeckSize: 30,
-        rerollCounts: { "エルフ": 2, "ロイヤル": 2, "ウィッチ": 5, "ドラゴン": 2, "ナイトメア": 2, "ビショップ": 5, "ネメシス": 2 }
+        rerollCounts: { "エルフ": 4, "ロイヤル": 2, "ウィッチ": 6, "ドラゴン": 2, "ナイトメア": 2, "ビショップ": 4, "ネメシス": 2 }
     },
     userSettings: {
         neutralCardRate: 0.15,
@@ -64,6 +67,7 @@ window.onload = function () {
         currentWnew: document.getElementById('current-wnew'),
         startPickleButton: document.getElementById('start-pickle-button'),
         pickleDateInput: document.getElementById('pickle-date'),
+        pickleModeContainer: document.getElementById('pickle-mode-container'),
         shareResultButton: document.getElementById('share-result-button'),
         gameModeContainer: document.getElementById('game-mode-container'),
         refreshClassesButton: document.getElementById('refresh-classes-button')
@@ -277,6 +281,12 @@ window.onload = function () {
         renderClassSelection();
         updateDeckCardCountDisplay();
         elements.mode40Button.style.backgroundColor = '#2563eb';
+
+        // 機能フラグに応じて2Pickle用UIを非表示にする（コードは残す）
+        if (!ENABLE_PICKLE) {
+            if (elements.pickleModeContainer) elements.pickleModeContainer.style.display = 'none';
+            if (elements.startPickleButton) elements.startPickleButton.style.display = 'none';
+        }
     }
 
     function getGuaranteedCards(className) {
