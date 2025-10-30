@@ -303,7 +303,6 @@ const cardData = {
             // createCard("10042310", "竜の啓示", 3, RARITY.SILVER, GROUP.NORMAL),
             // createCard("10042110", "猛撃のドラゴンウォーリアー", 4, RARITY.SILVER, GROUP.NORMAL),
             // createCard("10042120", "咆哮の竜使い", 5, RARITY.SILVER, GROUP.NORMAL),
-
         ]
     },
     "ナイトメア": {
@@ -359,6 +358,7 @@ const cardData = {
             createCard("10154110", "奔放なる獄炎ケルベロス", 8, RARITY.LEGEND, GROUP.NORMAL),
             createCard("10254120", "流れ堕つ冥河カローン", 5, RARITY.LEGEND, GROUP.NORMAL),
             createCard("10254110", "双輪夜行ギンセツ&ユヅキ", 9, RARITY.LEGEND, GROUP.NORMAL),
+
             // createCard("10051130", "悪辣のレッサーマミー", 2, RARITY.BRONZE, GROUP.NORMAL),
             // createCard("10051310", "カオティックカース", 2, RARITY.BRONZE, GROUP.NORMAL),
             // createCard("10051120", "夜の鬼人", 3, RARITY.BRONZE, GROUP.NORMAL),
@@ -415,7 +415,7 @@ const cardData = {
             createCard("10163110", "終焉のスカルフェイン", 6, RARITY.GOLD, GROUP.NORMAL),
             createCard("10163220", "邪教の器", 6, RARITY.GOLD, GROUP.NORMAL),
             createCard("10163130", "大いなる熾天使ラピス", 8, RARITY.GOLD, GROUP.NORMAL),
-            createCard("10263310", "狂おしき恩寵", 2, RARITY.GOLD, GROUP.NORMAL),
+            createCard("10263310", "狂おしき恩寵", 4, RARITY.GOLD, GROUP.NORMAL),
             createCard("10263110", "速断の刃アニエス", 5, RARITY.GOLD, GROUP.NORMAL),
             createCard("10164130", "水の守護神サレファ", 5, RARITY.LEGEND, GROUP.NORMAL),
             createCard("10164110", "裁決のアナテマロデオ", 7, RARITY.LEGEND, GROUP.NORMAL),
